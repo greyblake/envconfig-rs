@@ -1,0 +1,6 @@
+[package]
+name = "envconfig_derive"
+version = "0.2.0"
+authors = ["Sergey Potapov <blake131313@gmail.com>"]
+
+[dependencies]
