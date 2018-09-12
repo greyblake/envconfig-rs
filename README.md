@@ -1,5 +1,9 @@
 # Envconfig
 
+[![Build Status](https://travis-ci.org/greyblake/envconfig-rs.svg?branch=master)](https://travis-ci.org/greyblake/envconfig-rs)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/greyblake/envconfig-rs/master/LICENSE)
+[![Documentation](https://docs.rs/envconfig/badge.svg)](https://docs.rs/envconfig)
+
 Build a config structure form environment variables in Rust without boilerplate.
 
 ## Usage
