@@ -2,6 +2,14 @@
 name = "envconfig_derive"
 version = "0.2.0"
 authors = ["Sergey Potapov <blake131313@gmail.com>"]
+description = "Build a config object from environment variables without boilerplate."
+categories = ["config", "web-programming"]
+keywords = ["config", "env", "macro", "configuration", "environment"]
+license = "MIT"
+repository = "https://github.com/greyblake/envconfig-rs"
+homepage = "https://github.com/greyblake/envconfig-rs"
+documentation = "https://docs.rs/envconfig_derive"
+readme = "README.md"
 
 [lib]
 proc-macro = true

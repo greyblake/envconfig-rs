@@ -1,18 +1,16 @@
+#[macro_use]
+extern crate envconfig_derive;
 extern crate envconfig;
-#[macro_use] extern crate envconfig_derive;
 
 use std::env;
-use envconfig::Error;
-use envconfig::Envconfig;
-
-
+use envconfig::{Error, Envconfig};
 
 #[derive(Envconfig)]
 pub struct Config {
-    #[var="DB_HOST"]
+    #[from="DB_HOST"]
     pub db_host: String,
 
-    #[var="DB_PORT"]
+    #[from="DB_PORT"]
     pub db_port: u16
 }
 

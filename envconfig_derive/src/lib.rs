@@ -12,7 +12,7 @@ struct Field {
     var_name: String,
 }
 
-#[proc_macro_derive(Envconfig, attributes(var))]
+#[proc_macro_derive(Envconfig, attributes(from))]
 pub fn envconfig(input: TokenStream) -> TokenStream {
     let s = input.to_string();
     let ast = syn::parse_derive_input(&s).unwrap();
@@ -65,8 +65,8 @@ fn parse_field(field_node: syn::Field) -> Field {
     let name = field_node.clone().ident.unwrap();
 
     let var_attr = field_node.attrs.iter()
-        .find(|a| { a.name() == "var" })
-        .expect(&format!("Field `{}` must have var attribute", name));
+        .find(|a| { a.name() == "from" })
+        .expect(&format!("Field `{}` must have from attribute", name));
 
     let var_name = match var_attr.value {
         MetaItem::NameValue(_, Lit::Str(ref val, _)) => val.to_string(),
