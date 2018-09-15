@@ -1,0 +1,8 @@
+[package]
+name = "envconfig_test_suite"
+version = "0.2.0"
+authors = ["Sergey Potapov <blake131313@gmail.com>"]
+
+[dependencies]
+envconfig = { path = "../envconfig" }
+envconfig_derive = { path = "../envconfig_derive" }
