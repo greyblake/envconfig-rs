@@ -31,11 +31,11 @@ extern crate envconfig;
 
 #[derive(Envconfig)]
 pub struct Config {
-    #[from="DB_HOST"]
+    #[envconfig(from = "DB_HOST")]
     pub db_host: String,
 
-    #[from="DB_PORT"]
-    pub db_port: u16
+    #[envconfig(from = "DB_PORT")]
+    pub db_port: u16,
 }
 
 // Build Config struct or exit with a meaninful error message.

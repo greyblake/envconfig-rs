@@ -8,7 +8,7 @@ extern crate quote;
 
 use proc_macro::TokenStream;
 
-use syn::{Ident, Lit, MetaItem};
+use syn::{Ident, Lit, MetaItem, NestedMetaItem};
 
 #[derive(Debug)]
 struct Field {
@@ -16,7 +16,7 @@ struct Field {
     var_name: String,
 }
 
-#[proc_macro_derive(Envconfig, attributes(from))]
+#[proc_macro_derive(Envconfig, attributes(from, envconfig))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let s = input.to_string();
     let ast = syn::parse_derive_input(&s).unwrap();
@@ -66,21 +66,62 @@ fn fetch_fields_from_ast_body(body: syn::Body, name: &str) -> Vec<syn::Field> {
 }
 
 fn parse_field(field_node: syn::Field) -> Field {
+    let mut from: Option<String> = None;
+    // let mut default: Option<::syn::Lit> = None;
+
+    // Get name of the field
     let name = field_node.ident.unwrap();
 
-    let var_attr = field_node
+    // Find `envconfig` attribute on the given field
+    let attr = field_node
         .attrs
         .iter()
-        .find(|a| a.name() == "from")
-        .unwrap_or_else(|| panic!("Field `{}` must have from attribute", name));
+        .find(|a| a.name() == "envconfig")
+        .unwrap_or_else(|| panic!("Field `{}` must have `envconfig` attribute.", name));
 
-    let var_name = match var_attr.value {
-        MetaItem::NameValue(_, Lit::Str(ref val, _)) => val.to_string(),
-        _ => panic!(
-            "Envconfig: can not fetch value of var attribute for field `{}`",
-            name
-        ),
+    // Unwrap list from `envconfig` attribute.
+    let list = match attr.value {
+        MetaItem::List(ref _ident, ref list) => list,
+        _ => panic!("Envconfig: attribute `envconfig` must be a list"),
     };
 
-    Field { name, var_name }
+    // Iterate over items of `envconfig` attribute.
+    // Each item is supposed to have name and value.
+    for item in list.iter() {
+        let mt = match item {
+            NestedMetaItem::MetaItem(mt) => mt,
+            _ => panic!(
+                "Envconfig: failed to parse `envconfig` attribute for field `{}`",
+                name
+            ),
+        };
+        let (ident, value) = match mt {
+            MetaItem::NameValue(ident, lit) => (ident, lit),
+            _ => panic!(
+                "Envconfig: failed to parse `envconfig` attribute for field `{}`",
+                name
+            ),
+        };
+
+        let item_name = format!("{}", ident);
+
+        match item_name.as_str() {
+            "from" => match value {
+                Lit::Str(s, _style) => {
+                    from = Some(s.to_string());
+                }
+                _ => panic!("Envconfig: value of `from` must be a string"),
+            },
+            // TODO: handle "default" here as well
+            _ => panic!("Envconfig: unknown item on `{}`", item_name),
+        }
+    }
+
+    let from_value =
+        from.unwrap_or_else(|| panic!("attribute `envconfig` must contain `from` item"));
+
+    Field {
+        name,
+        var_name: from_value,
+    }
 }
