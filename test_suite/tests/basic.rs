@@ -53,15 +53,3 @@ fn test_fails_if_can_not_parse_db_port() {
     let expected_err = Error::ParseError { name: "DB_PORT" };
     assert_eq!(err, expected_err);
 }
-
-#[test]
-fn test_init_or_die() {
-    setup();
-
-    env::set_var("DB_HOST", "localhost");
-    env::set_var("DB_PORT", "5432");
-
-    let config = Config::init_or_die();
-    assert_eq!(config.db_host, "localhost");
-    assert_eq!(config.db_port, 5432u16);
-}
