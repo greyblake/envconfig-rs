@@ -63,13 +63,13 @@ fn fetch_fields_from_ast_body(body: syn::Body, name: &str) -> Vec<syn::Field> {
 }
 
 fn parse_field(field_node: syn::Field) -> Field {
-    let name = field_node.clone().ident.unwrap();
+    let name = field_node.ident.unwrap();
 
     let var_attr = field_node
         .attrs
         .iter()
         .find(|a| a.name() == "from")
-        .expect(&format!("Field `{}` must have from attribute", name));
+        .unwrap_or_else(|| panic!("Field `{}` must have from attribute", name));
 
     let var_name = match var_attr.value {
         MetaItem::NameValue(_, Lit::Str(ref val, _)) => val.to_string(),
