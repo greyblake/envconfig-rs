@@ -1,9 +1,5 @@
 language: rust
 rust:
   - stable
-  - nightly
-matrix:
-  allow_failures:
-    - rust: nightly
 script:
-  - cargo test -p envconfig -- --test-threads=1
+  - cargo test -- --test-threads=1
