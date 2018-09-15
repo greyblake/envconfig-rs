@@ -1,3 +1,6 @@
+//! Provides a derive macro that implements `Envconfig` trait.
+//! For complete documentation please see [envconfig](https://docs.rs/envconfig).
+
 extern crate proc_macro;
 extern crate syn;
 #[macro_use]
