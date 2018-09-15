@@ -16,7 +16,7 @@ struct Field {
     var_name: String,
 }
 
-#[proc_macro_derive(Envconfig, attributes(from, envconfig))]
+#[proc_macro_derive(Envconfig, attributes(envconfig))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let s = input.to_string();
     let ast = syn::parse_derive_input(&s).unwrap();
