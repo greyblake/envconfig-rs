@@ -2,16 +2,16 @@
 extern crate envconfig_derive;
 extern crate envconfig;
 
+use envconfig::{Envconfig, Error};
 use std::env;
-use envconfig::{Error, Envconfig};
 
 #[derive(Envconfig)]
 pub struct Config {
-    #[from="DB_HOST"]
+    #[from = "DB_HOST"]
     pub db_host: String,
 
-    #[from="DB_PORT"]
-    pub db_port: u16
+    #[from = "DB_PORT"]
+    pub db_port: u16,
 }
 
 fn setup() {
