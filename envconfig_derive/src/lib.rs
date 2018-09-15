@@ -1,3 +1,6 @@
+//! Provides a derive macro that implements `Envconfig` trait.
+//! For complete documentation please see [envconfig](https://docs.rs/envconfig).
+
 extern crate proc_macro;
 extern crate syn;
 #[macro_use]
@@ -14,7 +17,7 @@ struct Field {
 }
 
 #[proc_macro_derive(Envconfig, attributes(from))]
-pub fn envconfig(input: TokenStream) -> TokenStream {
+pub fn derive(input: TokenStream) -> TokenStream {
     let s = input.to_string();
     let ast = syn::parse_derive_input(&s).unwrap();
 
