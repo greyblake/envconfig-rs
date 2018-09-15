@@ -10,12 +10,9 @@ pub trait Envconfig {
     where
         Self: Sized,
     {
-        match Self::init() {
-            Ok(config) => config,
-            Err(err) => {
-                eprintln!("{}", err);
-                ::std::process::exit(1);
-            }
-        }
+        Self::init().unwrap_or_else(|err| {
+            eprintln!("{}", err);
+            ::std::process::exit(1);
+        })
     }
 }
