@@ -1,5 +1,6 @@
 use Error;
 
+/// Indicates that structure can be initialize from environment variables.
 pub trait Envconfig {
     fn init() -> Result<Self, Error>
     where
