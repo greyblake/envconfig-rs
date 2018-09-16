@@ -38,11 +38,11 @@ pub struct Config {
     pub db_port: u16,
 }
 
-// Build Config struct or exit with a meaninful error message.
-let config = Config::init_or_die();
-
-// You can also use `init`, wich returns Result<T, Error>
-let config = Config::init().unwrap();
+// Initialize config from environment variables or terminate the process.
+let config = Self::init().unwrap_or_else(|err| {
+    eprintln!("{}", err);
+    ::std::process::exit(1);
+});
 ```
 
 ## Running tests
