@@ -39,7 +39,7 @@ pub struct Config {
 }
 
 // Initialize config from environment variables or terminate the process.
-let config = Self::init().unwrap_or_else(|err| {
+let config = Config::init().unwrap_or_else(|err| {
     eprintln!("{}", err);
     ::std::process::exit(1);
 });
@@ -47,10 +47,11 @@ let config = Self::init().unwrap_or_else(|err| {
 
 ## Running tests
 
-To prevent flaky tests run them in one thread:
+Tests do some manipulation with environment variables, so to
+prevent flaky tests they have to be executed in a single thread:
 
 ```
-cargo test -p envconfig -- --test-threads=1
+cargo test -- --test-threads=1
 ```
 
 ## License
