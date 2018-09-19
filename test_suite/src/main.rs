@@ -13,5 +13,4 @@ pub struct Config {
     pub host: u16,
 }
 
-fn main() {
-}
+fn main() {}
