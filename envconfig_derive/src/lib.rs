@@ -50,10 +50,19 @@ fn impl_envconfig_for_struct(
                 let path = &a.path;
                 let name = quote!(#path).to_string();
                 name == "envconfig"
-            }).unwrap_or_else(|| panic!("Can not find attribute `envconfig` on field `{}`", field_name));
+            }).unwrap_or_else(|| {
+                panic!(
+                    "Can not find attribute `envconfig` on field `{}`",
+                    field_name
+                )
+            });
 
-        let opt_meta = attr.interpret_meta()
-            .unwrap_or_else(|| panic!("Can not interpret meta of `envconfig` attribute on field `{}`", field_name));
+        let opt_meta = attr.interpret_meta().unwrap_or_else(|| {
+            panic!(
+                "Can not interpret meta of `envconfig` attribute on field `{}`",
+                field_name
+            )
+        });
 
         let list = match opt_meta {
             syn::Meta::List(l) => l.nested,
@@ -80,7 +89,12 @@ fn impl_envconfig_for_struct(
             }).find(|name_value| {
                 let ident = &name_value.ident;
                 quote!(#ident).to_string() == "from"
-            }).unwrap_or_else(|| panic!("`envconfig` attribute on field `{}` must contain `from` item", field_name));
+            }).unwrap_or_else(|| {
+                panic!(
+                    "`envconfig` attribute on field `{}` must contain `from` item",
+                    field_name
+                )
+            });
 
         let from_value = &from_item.lit;
 
