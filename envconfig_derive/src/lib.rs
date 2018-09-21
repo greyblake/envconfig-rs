@@ -50,35 +50,37 @@ fn impl_envconfig_for_struct(
                 let path = &a.path;
                 let name = quote!(#path).to_string();
                 name == "envconfig"
-            }).expect(&format!("Can not find attribute `envconfig` on field `{}`", field_name));
+            }).unwrap_or_else(|| panic!("Can not find attribute `envconfig` on field `{}`", field_name));
 
         let opt_meta = attr.interpret_meta()
-            .expect(&format!("Can not interpret meta of `envconfig` attribute on field `{}`", field_name));
+            .unwrap_or_else(|| panic!("Can not interpret meta of `envconfig` attribute on field `{}`", field_name));
 
         let list = match opt_meta {
             syn::Meta::List(l) => l.nested,
-            _ => panic!("`envconfig` attribute on field `{}` must contain a list", field_name),
+            _ => panic!(
+                "`envconfig` attribute on field `{}` must contain a list",
+                field_name
+            ),
         };
 
         let from_item = list
             .iter()
-            .map(|item| {
-                match item {
-                    syn::NestedMeta::Meta(meta) => match meta {
-                        syn::Meta::NameValue(name_value) => name_value,
-                        _ => panic!("`envconfig` attribute on field `{}` must contain name/value item", field_name),
-                    },
-                    _ => panic!("Failed to process `envconfig` attribute on field `{}`", field_name),
-                }
+            .map(|item| match item {
+                syn::NestedMeta::Meta(meta) => match meta {
+                    syn::Meta::NameValue(name_value) => name_value,
+                    _ => panic!(
+                        "`envconfig` attribute on field `{}` must contain name/value item",
+                        field_name
+                    ),
+                },
+                _ => panic!(
+                    "Failed to process `envconfig` attribute on field `{}`",
+                    field_name
+                ),
             }).find(|name_value| {
                 let ident = &name_value.ident;
                 quote!(#ident).to_string() == "from"
-            }).expect(
-                &format!(
-                    "`envconfig` attribute on field `{}` must contain `from` item",
-                    field_name
-                )
-            );
+            }).unwrap_or_else(|| panic!("`envconfig` attribute on field `{}` must contain `from` item", field_name));
 
         let from_value = &from_item.lit;
 
