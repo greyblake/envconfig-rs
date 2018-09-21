@@ -41,6 +41,7 @@ fn impl_envconfig_for_struct(
 ) -> proc_macro2::TokenStream {
     let gen_fields = fields.iter().map(|f| {
         let ident = &f.ident;
+        let field_name = quote!(#ident).to_string();
 
         let attr = f
             .attrs
@@ -49,14 +50,14 @@ fn impl_envconfig_for_struct(
                 let path = &a.path;
                 let name = quote!(#path).to_string();
                 name == "envconfig"
-            }).expect("Can not find attribute envconfig on field"); // TODO: provide field name
+            }).expect(&format!("Can not find attribute `envconfig` on field `{}`", field_name));
 
-        // TODO: provide user-friendly error message
-        let opt_meta = attr.interpret_meta().expect("Can not interpret meta");
+        let opt_meta = attr.interpret_meta()
+            .expect(&format!("Can not interpret meta of `envconfig` attribute on field `{}`", field_name));
 
         let list = match opt_meta {
             syn::Meta::List(l) => l.nested,
-            _ => panic!("envconfig attribute must contain list"),
+            _ => panic!("`envconfig` attribute on field `{}` must contain a list", field_name),
         };
 
         let from_item = list
@@ -65,14 +66,19 @@ fn impl_envconfig_for_struct(
                 match item {
                     syn::NestedMeta::Meta(meta) => match meta {
                         syn::Meta::NameValue(name_value) => name_value,
-                        _ => panic!("envconfig attribute must contain name/value item"),
+                        _ => panic!("`envconfig` attribute on field `{}` must contain name/value item", field_name),
                     },
-                    _ => panic!("Is not meta"), // TODO: user friendly error message
+                    _ => panic!("Failed to process `envconfig` attribute on field `{}`", field_name),
                 }
             }).find(|name_value| {
                 let ident = &name_value.ident;
                 quote!(#ident).to_string() == "from"
-            }).expect("`envconfig` attribute must contain `from` item"); // TODO: provide field name
+            }).expect(
+                &format!(
+                    "`envconfig` attribute on field `{}` must contain `from` item",
+                    field_name
+                )
+            );
 
         let from_value = &from_item.lit;
 
