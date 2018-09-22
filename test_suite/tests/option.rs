@@ -1,12 +1,9 @@
-/*
 #[macro_use]
 extern crate envconfig_derive;
 extern crate envconfig;
 
-use envconfig::Envconfig;
+use envconfig::{Envconfig, Error};
 use std::env;
-
-// type Port = Option<u16>;
 
 #[derive(Envconfig)]
 pub struct Config {
@@ -14,9 +11,33 @@ pub struct Config {
     pub port: Option<u16>,
 }
 
+fn setup() {
+    env::remove_var("PORT");
+}
+
 #[test]
-fn test_if_env_var_is_not_set_then_initialized_with_none() {
+fn test_var_is_missing() {
+    setup();
+
     let config = Config::init().unwrap();
     assert_eq!(config.port, None);
 }
-*/
+
+#[test]
+fn test_var_is_present() {
+    setup();
+
+    env::set_var("PORT", "3030");
+    let config = Config::init().unwrap();
+    assert_eq!(config.port, Some(3030));
+}
+
+#[test]
+fn test_var_is_invalid() {
+    setup();
+
+    env::set_var("PORT", "xyz");
+    let err = Config::init().err().unwrap();
+    let expected_err = Error::ParseError { name: "PORT" };
+    assert_eq!(err, expected_err);
+}

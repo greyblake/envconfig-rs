@@ -18,3 +18,15 @@ pub fn load_var<T: FromStr>(var_name: &'static str) -> Result<T, Error> {
                 .map_err(|_| Error::ParseError { name: var_name })
         })
 }
+
+pub fn load_optional_var<T: FromStr>(var_name: &'static str) -> Result<Option<T>, Error> {
+    let res_var = env::var(var_name);
+
+    match res_var {
+        Err(_) => Ok(None),
+        Ok(string_value) => string_value
+            .parse::<T>()
+            .map(|v| Some(v))
+            .map_err(|_| Error::ParseError { name: var_name }),
+    }
+}

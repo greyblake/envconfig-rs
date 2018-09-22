@@ -47,4 +47,4 @@ mod utils;
 
 pub use error::Error;
 pub use traits::Envconfig;
-pub use utils::load_var;
+pub use utils::{load_optional_var, load_var};
