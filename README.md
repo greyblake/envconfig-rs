@@ -17,8 +17,8 @@ And you want to initialize `Config` structure like this one:
 
 ```rust,ignore
 struct Config {
-  host: String,
-  port: u16
+    host: String,
+    port: u16,
 }
 ```
 
