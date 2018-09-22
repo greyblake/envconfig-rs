@@ -53,8 +53,6 @@ fn impl_envconfig_for_struct(
 }
 
 fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
-    let ident = &field.ident;
-
     let attr = fetch_envconfig_attr_from_field(field);
     let list = fetch_list_from_attr(field, attr);
     let from_value = find_item_in_list_or_panic(field, &list, "from");
@@ -63,22 +61,34 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
     let field_type = &field.ty;
 
     if to_s(field_type).starts_with("Option ") {
-        if let Some(_) = opt_default {
-            panic!("Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(ident));
-        } else {
-            quote! {
-                #ident: ::envconfig::load_optional_var(#from_value)?
-            }
+        gen_field_assign_for_optional_type(field, from_value, opt_default)
+    } else {
+        gen_field_assign_for_non_optional_type(field, from_value, opt_default)
+    }
+}
+
+fn gen_field_assign_for_optional_type(field: &Field, from: &Lit, opt_default: Option<&Lit>) -> proc_macro2::TokenStream {
+    let ident = &field.ident;
+
+    if opt_default.is_some() {
+        panic!("Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(ident));
+    } else {
+        quote! {
+            #ident: ::envconfig::load_optional_var(#from)?
+        }
+    }
+}
+
+fn gen_field_assign_for_non_optional_type(field: &Field, from: &Lit, opt_default: Option<&Lit>) -> proc_macro2::TokenStream {
+    let ident = &field.ident;
+
+    if let Some(default) = opt_default {
+        quote! {
+            #ident: ::envconfig::load_var_with_default(#from, #default)?
         }
     } else {
-        if let Some(default) = opt_default {
-            quote! {
-                #ident: ::envconfig::load_var_with_default(#from_value, #default)?
-            }
-        } else {
-            quote! {
-                #ident: ::envconfig::load_var(#from_value)?
-            }
+        quote! {
+            #ident: ::envconfig::load_var(#from)?
         }
     }
 }
