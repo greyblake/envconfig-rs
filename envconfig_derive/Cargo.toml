@@ -1,6 +1,6 @@
 [package]
 name = "envconfig_derive"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Sergey Potapov <blake131313@gmail.com>"]
 description = "Build a config object from environment variables without boilerplate."
 categories = ["config", "web-programming"]
