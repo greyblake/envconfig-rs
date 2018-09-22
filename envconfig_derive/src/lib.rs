@@ -98,8 +98,16 @@ fn impl_envconfig_for_struct(
 
         let from_value = &from_item.lit;
 
-        quote! {
-            #ident: ::envconfig::load_var(#from_value)?
+        let fty = &f.ty;
+        let ftype = quote!(#fty).to_string();
+        if ftype.starts_with("Option ") {
+            quote! {
+                #ident: ::envconfig::load_optional_var(#from_value)?
+            }
+        } else {
+            quote! {
+                #ident: ::envconfig::load_var(#from_value)?
+            }
         }
     });
 
