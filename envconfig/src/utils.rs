@@ -26,7 +26,7 @@ pub fn load_optional_var<T: FromStr>(var_name: &'static str) -> Result<Option<T>
         Err(_) => Ok(None),
         Ok(string_value) => string_value
             .parse::<T>()
-            .map(|v| Some(v))
+            .map(Some)
             .map_err(|_| Error::ParseError { name: var_name }),
     }
 }
