@@ -8,9 +8,9 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
-use syn::{DeriveInput, Ident, Field, Attribute, NestedMeta, Lit, Meta, Fields};
-use syn::token::Comma;
 use syn::punctuated::Punctuated;
+use syn::token::Comma;
+use syn::{Attribute, DeriveInput, Field, Fields, Ident, Lit, Meta, NestedMeta};
 
 #[proc_macro_derive(Envconfig, attributes(envconfig))]
 pub fn derive(input: TokenStream) -> TokenStream {
@@ -25,9 +25,7 @@ fn impl_envconfig(input: &DeriveInput) -> proc_macro2::TokenStream {
 
     let inner_impl = match input.data {
         Struct(ref ds) => match ds.fields {
-            Fields::Named(ref fields) => {
-                impl_envconfig_for_struct(struct_name, &fields.named)
-            }
+            Fields::Named(ref fields) => impl_envconfig_for_struct(struct_name, &fields.named),
             _ => panic!("envconfig supports only named fields"),
         },
         _ => panic!("envconfig only supports non-tuple structs"),
@@ -36,7 +34,10 @@ fn impl_envconfig(input: &DeriveInput) -> proc_macro2::TokenStream {
     quote!(#inner_impl)
 }
 
-fn impl_envconfig_for_struct(struct_name: &Ident, fields: &Punctuated<Field, Comma>) -> proc_macro2::TokenStream {
+fn impl_envconfig_for_struct(
+    struct_name: &Ident,
+    fields: &Punctuated<Field, Comma>,
+) -> proc_macro2::TokenStream {
     let field_assigns = fields.iter().map(gen_field_assign);
 
     quote! {
@@ -110,7 +111,11 @@ fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMet
     }
 }
 
-fn fetch_item_from_list<'l, 'n>(field: &Field, list: &'l Punctuated<NestedMeta, Comma>, item_name: &'n str) -> &'l Lit {
+fn fetch_item_from_list<'l, 'n>(
+    field: &Field,
+    list: &'l Punctuated<NestedMeta, Comma>,
+    item_name: &'n str,
+) -> &'l Lit {
     let item = list
         .iter()
         .map(|item| match item {
