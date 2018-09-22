@@ -57,18 +57,28 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
 
     let attr = fetch_envconfig_attr_from_field(field);
     let list = fetch_list_from_attr(field, attr);
-    let from_value = fetch_item_from_list(field, &list, "from");
+    let from_value = find_item_in_list_or_panic(field, &list, "from");
+    let opt_default = find_item_in_list(field, &list, "default");
 
-    let field_ty = &field.ty;
-    let field_type_name = quote!(#field_ty).to_string();
+    let field_type = &field.ty;
 
-    if field_type_name.starts_with("Option ") {
-        quote! {
-            #ident: ::envconfig::load_optional_var(#from_value)?
+    if to_s(field_type).starts_with("Option ") {
+        if let Some(_) = opt_default {
+            panic!("Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(ident));
+        } else {
+            quote! {
+                #ident: ::envconfig::load_optional_var(#from_value)?
+            }
         }
     } else {
-        quote! {
-            #ident: ::envconfig::load_var(#from_value)?
+        if let Some(default) = opt_default {
+            quote! {
+                #ident: ::envconfig::load_var_with_default(#from_value, #default)?
+            }
+        } else {
+            quote! {
+                #ident: ::envconfig::load_var(#from_value)?
+            }
         }
     }
 }
@@ -89,11 +99,6 @@ fn fetch_envconfig_attr_from_field(field: &Field) -> &Attribute {
         })
 }
 
-fn field_name(field: &Field) -> String {
-    let ident = &field.ident;
-    quote!(#ident).to_string()
-}
-
 fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMeta, Comma> {
     let opt_meta = attr.interpret_meta().unwrap_or_else(|| {
         panic!(
@@ -111,12 +116,23 @@ fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMet
     }
 }
 
-fn fetch_item_from_list<'l, 'n>(
+fn find_item_in_list_or_panic<'l, 'n>(
     field: &Field,
     list: &'l Punctuated<NestedMeta, Comma>,
     item_name: &'n str,
 ) -> &'l Lit {
-    let item = list
+    find_item_in_list(field, list, item_name)
+        .unwrap_or_else(|| {
+            panic!(
+                "`envconfig` attribute on field `{}` must contain `{}` item",
+                field_name(field),
+                item_name
+            )
+        })
+}
+
+fn find_item_in_list<'l, 'n>(field: &Field, list: &'l Punctuated<NestedMeta, Comma>, item_name: &'n str,) -> Option<&'l Lit> {
+    list
         .iter()
         .map(|item| match item {
             NestedMeta::Meta(meta) => match meta {
@@ -132,14 +148,17 @@ fn fetch_item_from_list<'l, 'n>(
             ),
         }).find(|name_value| {
             let ident = &name_value.ident;
-            quote!(#ident).to_string() == item_name
-        }).unwrap_or_else(|| {
-            panic!(
-                "`envconfig` attribute on field `{}` must contain `{}` item",
-                field_name(field),
-                item_name
-            )
-        });
+            let name = quote!(#ident).to_string();
+            name == item_name
+        }).map(|item| {
+            &item.lit
+        })
+}
 
-    &item.lit
+fn field_name(field: &Field) -> String {
+    to_s(&field.ident)
+}
+
+fn to_s<T: quote::ToTokens>(node: &T) -> String {
+    quote!(#node).to_string()
 }

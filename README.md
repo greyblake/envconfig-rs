@@ -36,14 +36,13 @@ pub struct Config {
     #[envconfig(from = "DB_HOST")]
     pub db_host: String,
 
-    #[envconfig(from = "DB_PORT")]
+    #[envconfig(from = "DB_PORT", default = "5432")]
     pub db_port: u16,
 }
 
 fn main() {
     // Assuming the following environment variables are set
     std::env::set_var("DB_HOST", "127.0.0.1");
-    std::env::set_var("DB_PORT", "5432");
 
     // Initialize config from environment variables or terminate the process.
     let config = Config::init().unwrap();
@@ -66,7 +65,7 @@ cargo test -- --test-threads=1
 
 * [x] - migrate to the latest versions of `syn` and `quote`
 * [x] - support `Option<T>` ([issue](https://github.com/greyblake/envconfig-rs/issues/10))
-* [ ] - support `default` attribute ([issue](https://github.com/greyblake/envconfig-rs/issues/3))
+* [x] - support `default` attribute ([issue](https://github.com/greyblake/envconfig-rs/issues/3))
 * [ ] - support nested structures?
 
 ## License
