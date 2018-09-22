@@ -18,7 +18,7 @@
 //!     pub db_host: String,
 //!
 //!     #[envconfig(from = "DB_PORT")]
-//!     pub db_port: u16,
+//!     pub db_port: Option<u16>,
 //! }
 //!
 //! fn main() {
@@ -30,7 +30,7 @@
 //!     let config = Config::init().unwrap();
 //!
 //!     assert_eq!(config.db_host, "localhost");
-//!     assert_eq!(config.db_port, 5432);
+//!     assert_eq!(config.db_port, Some(5432));
 //! }
 //! ```
 //!
