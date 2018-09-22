@@ -15,7 +15,7 @@ Let's say you application relies on the following environment variables:
 
 And you want to initialize `Config` structure like this one:
 
-```rust
+```rust,ignore
 struct Config {
   host: String,
   port: u16
@@ -29,6 +29,8 @@ You can achieve this with the following code without boilerplate:
 extern crate envconfig_derive;
 extern crate envconfig;
 
+use envconfig::Envconfig;
+
 #[derive(Envconfig)]
 pub struct Config {
     #[envconfig(from = "DB_HOST")]
@@ -38,11 +40,17 @@ pub struct Config {
     pub db_port: u16,
 }
 
-// Initialize config from environment variables or terminate the process.
-let config = Config::init().unwrap_or_else(|err| {
-    eprintln!("{}", err);
-    ::std::process::exit(1);
-});
+fn main() {
+    // Assuming the following environment variables are set
+    std::env::set_var("DB_HOST", "127.0.0.1");
+    std::env::set_var("DB_PORT", "5432");
+
+    // Initialize config from environment variables or terminate the process.
+    let config = Config::init().unwrap();
+
+    assert_eq!(config.db_host, "127.0.0.1");
+    assert_eq!(config.db_port, 5432);
+}
 ```
 
 ## Running tests
