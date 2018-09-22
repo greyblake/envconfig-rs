@@ -64,8 +64,8 @@ cargo test -- --test-threads=1
 
 ## Roadmap
 
-* [ ] - migrate to the latest versions of `syn` and `quote`
-* [ ] - support `Option<T>` ([issue](https://github.com/greyblake/envconfig-rs/issues/10))
+* [x] - migrate to the latest versions of `syn` and `quote`
+* [x] - support `Option<T>` ([issue](https://github.com/greyblake/envconfig-rs/issues/10))
 * [ ] - support `default` attribute ([issue](https://github.com/greyblake/envconfig-rs/issues/3))
 * [ ] - support nested structures?
 
