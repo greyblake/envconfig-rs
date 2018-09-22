@@ -4,7 +4,6 @@
 * Improve error messages on panics
 * Add `skeptic` to generate tests based on README code examples
 
-
 #### v0.3.0 - 2018-09-16
 * [breaking] Use `envconfig` attribute instead of `from` in the derive macro
 * [breaking] Remove init_or_die() function from Envconfig trait
