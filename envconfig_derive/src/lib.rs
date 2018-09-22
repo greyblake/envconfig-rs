@@ -67,7 +67,11 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
     }
 }
 
-fn gen_field_assign_for_optional_type(field: &Field, from: &Lit, opt_default: Option<&Lit>) -> proc_macro2::TokenStream {
+fn gen_field_assign_for_optional_type(
+    field: &Field,
+    from: &Lit,
+    opt_default: Option<&Lit>,
+) -> proc_macro2::TokenStream {
     let ident = &field.ident;
 
     if opt_default.is_some() {
@@ -79,7 +83,11 @@ fn gen_field_assign_for_optional_type(field: &Field, from: &Lit, opt_default: Op
     }
 }
 
-fn gen_field_assign_for_non_optional_type(field: &Field, from: &Lit, opt_default: Option<&Lit>) -> proc_macro2::TokenStream {
+fn gen_field_assign_for_non_optional_type(
+    field: &Field,
+    from: &Lit,
+    opt_default: Option<&Lit>,
+) -> proc_macro2::TokenStream {
     let ident = &field.ident;
 
     if let Some(default) = opt_default {
@@ -131,19 +139,21 @@ fn find_item_in_list_or_panic<'l, 'n>(
     list: &'l Punctuated<NestedMeta, Comma>,
     item_name: &'n str,
 ) -> &'l Lit {
-    find_item_in_list(field, list, item_name)
-        .unwrap_or_else(|| {
-            panic!(
-                "`envconfig` attribute on field `{}` must contain `{}` item",
-                field_name(field),
-                item_name
-            )
-        })
+    find_item_in_list(field, list, item_name).unwrap_or_else(|| {
+        panic!(
+            "`envconfig` attribute on field `{}` must contain `{}` item",
+            field_name(field),
+            item_name
+        )
+    })
 }
 
-fn find_item_in_list<'l, 'n>(field: &Field, list: &'l Punctuated<NestedMeta, Comma>, item_name: &'n str,) -> Option<&'l Lit> {
-    list
-        .iter()
+fn find_item_in_list<'l, 'n>(
+    field: &Field,
+    list: &'l Punctuated<NestedMeta, Comma>,
+    item_name: &'n str,
+) -> Option<&'l Lit> {
+    list.iter()
         .map(|item| match item {
             NestedMeta::Meta(meta) => match meta {
                 Meta::NameValue(name_value) => name_value,
@@ -160,9 +170,7 @@ fn find_item_in_list<'l, 'n>(field: &Field, list: &'l Punctuated<NestedMeta, Com
             let ident = &name_value.ident;
             let name = quote!(#ident).to_string();
             name == item_name
-        }).map(|item| {
-            &item.lit
-        })
+        }).map(|item| &item.lit)
 }
 
 fn field_name(field: &Field) -> String {

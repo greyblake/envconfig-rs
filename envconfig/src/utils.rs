@@ -19,12 +19,15 @@ pub fn load_var<T: FromStr>(var_name: &'static str) -> Result<T, Error> {
         })
 }
 
-pub fn load_var_with_default<T: FromStr>(var_name: &'static str, default: &'static str) -> Result<T, Error> {
+pub fn load_var_with_default<T: FromStr>(
+    var_name: &'static str,
+    default: &'static str,
+) -> Result<T, Error> {
     let res_var = env::var(var_name);
 
     let string_value = match res_var {
         Err(_) => default,
-        Ok(ref value) => value
+        Ok(ref value) => value,
     };
 
     string_value
