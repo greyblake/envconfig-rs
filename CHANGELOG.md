@@ -1,4 +1,4 @@
-#### v0.x.x
+#### v0.5.0 - 2018-09-25
 * Support `default` attribute to specify default values
 
 #### v0.4.0 - 2018-09-22
