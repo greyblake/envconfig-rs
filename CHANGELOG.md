@@ -1,3 +1,6 @@
+#### v0.x.x
+* Support `default` attribute to specify default values
+
 #### v0.4.0 - 2018-09-22
 * Support of `Option<T>` types
 * Rewrite `envconfig_derive` to use the latests versions of `syn` and `quote` crates

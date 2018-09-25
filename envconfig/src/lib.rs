@@ -19,6 +19,9 @@
 //!
 //!     #[envconfig(from = "DB_PORT")]
 //!     pub db_port: Option<u16>,
+//!
+//!     #[envconfig(from = "HTTP_PORT", default = "8080")]
+//!     pub http_port: u16,
 //! }
 //!
 //! fn main() {
@@ -31,6 +34,7 @@
 //!
 //!     assert_eq!(config.db_host, "localhost");
 //!     assert_eq!(config.db_port, Some(5432));
+//!     assert_eq!(config.http_port, 8080);
 //! }
 //! ```
 //!
@@ -47,4 +51,4 @@ mod utils;
 
 pub use error::Error;
 pub use traits::Envconfig;
-pub use utils::{load_optional_var, load_var};
+pub use utils::{load_optional_var, load_var, load_var_with_default};
