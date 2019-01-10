@@ -109,7 +109,8 @@ fn fetch_envconfig_attr_from_field(field: &Field) -> &Attribute {
             let path = &a.path;
             let name = quote!(#path).to_string();
             name == "envconfig"
-        }).unwrap_or_else(|| {
+        })
+        .unwrap_or_else(|| {
             panic!(
                 "Can not find attribute `envconfig` on field `{}`",
                 field_name(field)
@@ -166,11 +167,13 @@ fn find_item_in_list<'l, 'n>(
                 "Failed to process `envconfig` attribute on field `{}`",
                 field_name(field)
             ),
-        }).find(|name_value| {
+        })
+        .find(|name_value| {
             let ident = &name_value.ident;
             let name = quote!(#ident).to_string();
             name == item_name
-        }).map(|item| &item.lit)
+        })
+        .map(|item| &item.lit)
 }
 
 fn field_name(field: &Field) -> String {
