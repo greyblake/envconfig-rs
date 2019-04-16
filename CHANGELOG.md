@@ -1,3 +1,6 @@
+#### v0.5.1 - 2019-04-14
+* Fix `Result` overlapping bug
+
 #### v0.5.0 - 2018-09-25
 * Support `default` attribute to specify default values
 
