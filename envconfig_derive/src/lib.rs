@@ -42,7 +42,7 @@ fn impl_envconfig_for_struct(
 
     quote! {
         impl Envconfig for #struct_name {
-            fn init() -> Result<Self, ::envconfig::Error> {
+            fn init() -> ::std::result::Result<Self, ::envconfig::Error> {
                 let config = Self {
                     #(#field_assigns,)*
                 };
