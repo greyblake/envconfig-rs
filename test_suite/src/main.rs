@@ -10,13 +10,14 @@ pub struct Config {
     pub port: u16,
 
     #[envconfig(from = "HOST")]
-    pub String: u16,
+    pub host: String,
 }
-
 
 // Ensure custom Result can be defined in the current context.
 // See: https://github.com/greyblake/envconfig-rs/issues/21
 type Result<T> = std::result::Result<T, Box<std::error::Error>>;
 
 fn main() {
+    let res: Result<i32> = Ok(123);
+    println!("{:?}", res);
 }
