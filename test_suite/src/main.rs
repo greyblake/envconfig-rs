@@ -15,7 +15,7 @@ pub struct Config {
 
 // Ensure custom Result can be defined in the current context.
 // See: https://github.com/greyblake/envconfig-rs/issues/21
-type Result<T> = std::result::Result<T, Box<std::error::Error>>;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() {
     let res: Result<i32> = Ok(123);
