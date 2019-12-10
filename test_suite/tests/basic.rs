@@ -53,3 +53,47 @@ fn test_fails_if_can_not_parse_db_port() {
     let expected_err = Error::ParseError { name: "DB_PORT" };
     assert_eq!(err, expected_err);
 }
+
+#[test]
+fn test_custom_from_str() {
+    use std::num::ParseIntError;
+    use std::str::FromStr;
+
+    setup();
+
+    #[derive(Debug, PartialEq)]
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+
+    impl FromStr for Point {
+        type Err = ParseIntError;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            let coords: Vec<&str> = s
+                .trim_matches(|p| p == '(' || p == ')')
+                .split(',')
+                .collect();
+
+            let x_fromstr = coords[0].parse::<i32>()?;
+            let y_fromstr = coords[1].parse::<i32>()?;
+
+            Ok(Point {
+                x: x_fromstr,
+                y: y_fromstr,
+            })
+        }
+    }
+
+    #[derive(Envconfig)]
+    pub struct Config {
+        #[envconfig(from = "DB_HOST")]
+        point: Point,
+    }
+
+    env::set_var("DB_HOST", "(1,2)");
+
+    let err = Config::init().unwrap();
+    assert_eq!(err.point, Point { x: 1, y: 2 });
+}
