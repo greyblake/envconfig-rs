@@ -59,9 +59,9 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
         let list = fetch_list_from_attr(field, attr);
         let from_value = find_item_in_list_or_panic(field, &list, "from");
         let opt_default = find_item_in_list(field, &list, "default");
-    
+
         let field_type = &field.ty;
-    
+
         if to_s(field_type).starts_with("Option ") {
             gen_field_assign_for_optional_type(field, from_value, opt_default)
         } else {
@@ -70,24 +70,17 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
     } else {
         gen_field_assign_for_struct_type(field)
     }
-
 }
 
-fn gen_field_assign_for_struct_type(
-    field: &Field,
-) -> proc_macro2::TokenStream {
+fn gen_field_assign_for_struct_type(field: &Field) -> proc_macro2::TokenStream {
     let ident = &field.ident;
     match &field.ty {
         syn::Type::Path(path) => {
             quote! {
                 #ident: #path :: init()?
             }
-        },
-        _ => {
-            panic!(
-                "AAA",
-            )
         }
+        _ => panic!("AAA",),
     }
 }
 
@@ -126,14 +119,11 @@ fn gen_field_assign_for_non_optional_type(
 }
 
 fn fetch_envconfig_attr_from_field(field: &Field) -> Option<&Attribute> {
-    field
-        .attrs
-        .iter()
-        .find(|a| {
-            let path = &a.path;
-            let name = quote!(#path).to_string();
-            name == "envconfig"
-        })
+    field.attrs.iter().find(|a| {
+        let path = &a.path;
+        let name = quote!(#path).to_string();
+        name == "envconfig"
+    })
 }
 
 fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMeta, Comma> {
