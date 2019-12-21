@@ -80,7 +80,7 @@ fn gen_field_assign_for_struct_type(field: &Field) -> proc_macro2::TokenStream {
                 #ident: #path :: init()?
             }
         }
-        _ => panic!("AAA",),
+        _ => panic!(format!("Expected field type to be a path: {:?}", ident)),
     }
 }
 
