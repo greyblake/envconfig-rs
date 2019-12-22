@@ -8,7 +8,7 @@ cargo fmt -- --check
 
 # Clippy
 touch ./*/*/*.rs
-cargo clippy -- -D warnings
+cargo clippy -- -W warnings
 
 # Tests
 cargo test -- --test-threads=1

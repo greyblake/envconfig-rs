@@ -1,3 +1,6 @@
+#### v0.6.0 - 2019-12-22
+* Support nested structures
+
 #### v0.5.1 - 2019-04-14
 * Fix `Result` overlapping bug
 

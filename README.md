@@ -66,7 +66,7 @@ cargo test -- --test-threads=1
 * [x] - migrate to the latest versions of `syn` and `quote`
 * [x] - support `Option<T>` ([issue](https://github.com/greyblake/envconfig-rs/issues/10))
 * [x] - support `default` attribute ([issue](https://github.com/greyblake/envconfig-rs/issues/3))
-* [ ] - support nested structures?
+* [x] - support nested structures?
 
 ## License
 
@@ -75,3 +75,4 @@ cargo test -- --test-threads=1
 ## Contributors
 
 - [greyblake](https://github.com/greyblake) Potapov Sergey - creator, maintainer.
+- [allevo](https://github.com/allevo) Tommaso Allevi - support nested structures
