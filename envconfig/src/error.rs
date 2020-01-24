@@ -1,8 +1,10 @@
+use thiserror::Error;
+
 /// Represents an error, that may be returned by `fn init()` of trait `Envconfig`.
-#[derive(Debug, Fail, PartialEq)]
+#[derive(Debug, PartialEq, Error)]
 pub enum Error {
-    #[fail(display = "Env variable is missing: {}", name)]
+    #[error("Env variable is missing: {name:?}")]
     EnvVarMissing { name: &'static str },
-    #[fail(display = "Failed to parse env variable: {}", name)]
+    #[error("Failed to parse env variable: {name:?}")]
     ParseError { name: &'static str },
 }

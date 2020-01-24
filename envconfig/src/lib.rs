@@ -42,8 +42,7 @@
 //! data type. So, if your data type does not implement `std::str::FromStr` the program
 //! will not compile.
 
-#[macro_use]
-extern crate failure;
+extern crate thiserror;
 
 mod error;
 mod traits;
