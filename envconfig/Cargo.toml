@@ -11,8 +11,8 @@ homepage = "https://github.com/greyblake/envconfig-rs"
 documentation = "https://docs.rs/envconfig"
 readme = "README.md"
 
-[dependencies]
-failure = "0.1.2"
-
 [dev-dependencies]
 envconfig_derive = { version = "0.6.0", path = "../envconfig_derive" }
+
+[dependencies]
+thiserror = "1.0.9"
