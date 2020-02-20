@@ -1,3 +1,6 @@
+#### v0.7.0 - 2019-02-20
+* Use `thiserror` for errors
+
 #### v0.6.0 - 2019-12-22
 * Support nested structures
 
