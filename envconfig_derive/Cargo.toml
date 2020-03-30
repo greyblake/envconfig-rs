@@ -15,6 +15,6 @@ readme = "README.md"
 proc-macro = true
 
 [dependencies]
-syn = "0.15.4"
-quote = "0.6.8"
-proc-macro2 = "0.4.19"
+syn = "1.0.17"
+quote = "1.0.3"
+proc-macro2 = "1.0.9"
