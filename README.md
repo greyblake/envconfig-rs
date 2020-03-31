@@ -76,3 +76,4 @@ cargo test -- --test-threads=1
 
 - [greyblake](https://github.com/greyblake) Potapov Sergey - creator, maintainer.
 - [allevo](https://github.com/allevo) Tommaso Allevi - support nested structures
+- [hobofan](https://github.com/hobofan) Maximilian Goisser - update dependencies

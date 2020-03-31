@@ -1,3 +1,6 @@
+#### v0.8.0 - 2019-03-31
+* Update `syn`, `quote` and `proc-macro2` dependencies to be `1.x.x`
+
 #### v0.7.0 - 2019-02-20
 * Use `thiserror` for errors
 
