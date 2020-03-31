@@ -127,10 +127,11 @@ fn fetch_envconfig_attr_from_field(field: &Field) -> Option<&Attribute> {
 }
 
 fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMeta, Comma> {
-    let opt_meta = attr.interpret_meta().unwrap_or_else(|| {
+    let opt_meta = attr.parse_meta().unwrap_or_else(|err| {
         panic!(
-            "Can not interpret meta of `envconfig` attribute on field `{}`",
-            field_name(field)
+            "Can not interpret meta of `envconfig` attribute on field `{}`: {}",
+            field_name(field),
+            err
         )
     });
 
@@ -176,11 +177,7 @@ fn find_item_in_list<'l, 'n>(
                 field_name(field)
             ),
         })
-        .find(|name_value| {
-            let ident = &name_value.ident;
-            let name = quote!(#ident).to_string();
-            name == item_name
-        })
+        .find(|name_value| name_value.path.is_ident(item_name))
         .map(|item| &item.lit)
 }
 
