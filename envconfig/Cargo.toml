@@ -10,6 +10,7 @@ repository = "https://github.com/greyblake/envconfig-rs"
 homepage = "https://github.com/greyblake/envconfig-rs"
 documentation = "https://docs.rs/envconfig"
 readme = "README.md"
+edition = "2018"
 
 [dev-dependencies]
 envconfig_derive = { version = "0.8.0", path = "../envconfig_derive" }

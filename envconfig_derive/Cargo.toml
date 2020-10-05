@@ -10,6 +10,7 @@ repository = "https://github.com/greyblake/envconfig-rs"
 homepage = "https://github.com/greyblake/envconfig-rs"
 documentation = "https://docs.rs/envconfig_derive"
 readme = "README.md"
+edition = "2018"
 
 [lib]
 proc-macro = true

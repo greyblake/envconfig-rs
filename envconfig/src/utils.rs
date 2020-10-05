@@ -1,7 +1,7 @@
 use std::env;
 use std::str::FromStr;
 
-use Error;
+use crate::error::Error;
 
 /// Load a nenvironment variable by name and parse it into type `T`.
 /// The function is used by `envconfig_derive` to implement `init()`.
