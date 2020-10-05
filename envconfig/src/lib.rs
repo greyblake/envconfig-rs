@@ -5,10 +5,6 @@
 //! Example
 //!
 //! ```
-//! #[macro_use]
-//! extern crate envconfig_derive;
-//! extern crate envconfig;
-//!
 //! use std::env;
 //! use envconfig::Envconfig;
 //!
