@@ -57,13 +57,6 @@ prevent flaky tests they have to be executed in a single thread:
 cargo test -- --test-threads=1
 ```
 
-## Roadmap
-
-* [x] - migrate to the latest versions of `syn` and `quote`
-* [x] - support `Option<T>` ([issue](https://github.com/greyblake/envconfig-rs/issues/10))
-* [x] - support `default` attribute ([issue](https://github.com/greyblake/envconfig-rs/issues/3))
-* [x] - support nested structures?
-
 ## License
 
 [MIT](https://github.com/greyblake/envconfig-rs/blob/master/LICENSE) © [Sergey Potapov](http://greyblake.com/)
