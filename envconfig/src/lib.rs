@@ -5,10 +5,6 @@
 //! Example
 //!
 //! ```
-//! #[macro_use]
-//! extern crate envconfig_derive;
-//! extern crate envconfig;
-//!
 //! use std::env;
 //! use envconfig::Envconfig;
 //!
@@ -51,3 +47,6 @@ mod utils;
 pub use error::Error;
 pub use traits::Envconfig;
 pub use utils::{load_optional_var, load_var, load_var_with_default};
+
+// re-export derive
+pub use envconfig_derive::Envconfig;

@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate envconfig_derive;
 extern crate envconfig;
 
 use envconfig::{Envconfig, Error};
@@ -19,7 +17,7 @@ fn setup() {
 fn test_var_is_missing() {
     setup();
 
-    let config = Config::init().unwrap();
+    let config = Config::init_from_env().unwrap();
     assert_eq!(config.port, None);
 }
 
@@ -28,7 +26,7 @@ fn test_var_is_present() {
     setup();
 
     env::set_var("PORT", "3030");
-    let config = Config::init().unwrap();
+    let config = Config::init_from_env().unwrap();
     assert_eq!(config.port, Some(3030));
 }
 
@@ -37,7 +35,7 @@ fn test_var_is_invalid() {
     setup();
 
     env::set_var("PORT", "xyz");
-    let err = Config::init().err().unwrap();
+    let err = Config::init_from_env().err().unwrap();
     let expected_err = Error::ParseError { name: "PORT" };
     assert_eq!(err, expected_err);
 }

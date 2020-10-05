@@ -25,10 +25,6 @@ struct Config {
 You can achieve this with the following code without boilerplate:
 
 ```rust
-#[macro_use]
-extern crate envconfig_derive;
-extern crate envconfig;
-
 use envconfig::Envconfig;
 
 #[derive(Envconfig)]
@@ -45,7 +41,7 @@ fn main() {
     std::env::set_var("DB_HOST", "127.0.0.1");
 
     // Initialize config from environment variables or terminate the process.
-    let config = Config::init().unwrap();
+    let config = Config::init_from_env().unwrap();
 
     assert_eq!(config.db_host, "127.0.0.1");
     assert_eq!(config.db_port, 5432);

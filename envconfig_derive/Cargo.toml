@@ -1,6 +1,6 @@
 [package]
 name = "envconfig_derive"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Sergey Potapov <blake131313@gmail.com>"]
 description = "Build a config structure from environment variables without boilerplate."
 categories = ["config", "web-programming"]
@@ -10,6 +10,7 @@ repository = "https://github.com/greyblake/envconfig-rs"
 homepage = "https://github.com/greyblake/envconfig-rs"
 documentation = "https://docs.rs/envconfig_derive"
 readme = "README.md"
+edition = "2018"
 
 [lib]
 proc-macro = true
