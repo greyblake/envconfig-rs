@@ -1,3 +1,7 @@
+#### v0.9.0 - 2019-10-05
+* Use rust edition 2018
+* Make envconfig re-export Envconfig macro from envconfig_derive (no need to use envconfig_derive explicitly anymore)
+
 #### v0.8.0 - 2019-03-31
 * Update `syn`, `quote` and `proc-macro2` dependencies to be `1.x.x`
 
