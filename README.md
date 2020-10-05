@@ -1,5 +1,3 @@
-# Envconfig
-
 <p align="center"><img width="100" src="https://raw.githubusercontent.com/greyblake/envconfig-rs/master/logo/envconfig.svg" alt="Envconfig logo (Rust)"></p>
 
 [![Build Status](https://travis-ci.org/greyblake/envconfig-rs.svg?branch=master)](https://travis-ci.org/greyblake/envconfig-rs)
