@@ -1,6 +1,6 @@
 [package]
 name = "envconfig"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Sergey Potapov <blake131313@gmail.com>"]
 description = "Build a config structure from environment variables without boilerplate."
 categories = ["config", "web-programming"]
