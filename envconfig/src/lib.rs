@@ -51,3 +51,6 @@ mod utils;
 pub use error::Error;
 pub use traits::Envconfig;
 pub use utils::{load_optional_var, load_var, load_var_with_default};
+
+// re-export derive
+pub use envconfig_derive::Envconfig;
