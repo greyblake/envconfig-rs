@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate envconfig_derive;
 extern crate envconfig;
 
 use envconfig::{Envconfig, Error};

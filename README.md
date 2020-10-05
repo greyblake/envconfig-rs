@@ -25,10 +25,6 @@ struct Config {
 You can achieve this with the following code without boilerplate:
 
 ```rust
-#[macro_use]
-extern crate envconfig_derive;
-extern crate envconfig;
-
 use envconfig::Envconfig;
 
 #[derive(Envconfig)]

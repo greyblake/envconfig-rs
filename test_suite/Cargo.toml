@@ -2,14 +2,7 @@
 name = "envconfig_test_suite"
 version = "0.2.0"
 authors = ["Sergey Potapov <blake131313@gmail.com>"]
-build = "build.rs"
 
 [dependencies]
 envconfig = { path = "../envconfig" }
 envconfig_derive = { path = "../envconfig_derive" }
-
-[build-dependencies]
-skeptic = "0.13"
-
-[dev-dependencies]
-skeptic = "0.13"
