@@ -1,8 +1,10 @@
-<p align="center"><img width="200" src="https://raw.githubusercontent.com/greyblake/envconfig-rs/master/logo/envconfig.svg" alt="Envconfig logo (Rust)"></p>
+<p align="center"><img width="200" src="https://raw.githubusercontent.com/greyblake/envconfig-rs/master/logo/envconfig.svg" alt="Envconfig logo"></p>
 
-[![Build Status](https://travis-ci.org/greyblake/envconfig-rs.svg?branch=master)](https://travis-ci.org/greyblake/envconfig-rs)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/greyblake/envconfig-rs/master/LICENSE)
-[![Documentation](https://docs.rs/envconfig/badge.svg)](https://docs.rs/envconfig)
+<p align="center">
+<a href="https://travis-ci.org/greyblake/envconfig-rs" rel="nofollow"><img src="https://travis-ci.org/greyblake/envconfig-rs.svg?branch=master" alt="Build Status"></a>
+<a href="https://raw.githubusercontent.com/greyblake/envconfig-rs/master/LICENSE" rel="nofollow"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+<a href="https://docs.rs/envconfig" rel="nofollow"><img src="https://docs.rs/envconfig/badge.svg" alt="Documentation"></a>
+<p>
 
 Build a config structure from environment variables in Rust without boilerplate.
 
