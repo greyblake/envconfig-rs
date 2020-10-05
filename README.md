@@ -6,7 +6,7 @@
 <a href="https://docs.rs/envconfig" rel="nofollow"><img src="https://docs.rs/envconfig/badge.svg" alt="Documentation"></a>
 <p>
 
-Build a config structure from environment variables in Rust without boilerplate.
+<p align="center">Initialize config structure from environment variables in Rust without boilerplate.</p>
 
 ## Usage
 
