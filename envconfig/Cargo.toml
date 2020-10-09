@@ -1,6 +1,6 @@
 [package]
 name = "envconfig"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Sergey Potapov <blake131313@gmail.com>"]
 description = "Build a config structure from environment variables without boilerplate."
 categories = ["config", "web-programming"]
@@ -15,5 +15,4 @@ edition = "2018"
 [dev-dependencies]
 
 [dependencies]
-envconfig_derive = { version = "0.9.0", path = "../envconfig_derive" }
-thiserror = "1.0.9"
+envconfig_derive = { version = "0.9.1", path = "../envconfig_derive" }
