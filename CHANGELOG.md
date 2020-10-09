@@ -1,3 +1,6 @@
+#### v0.9.1 - 2019-10-09
+* Get rid of thiserror dependency
+
 #### v0.9.0 - 2019-10-05
 * Use rust edition 2018
 * Make envconfig re-export Envconfig macro from envconfig_derive (no need to use envconfig_derive explicitly anymore)

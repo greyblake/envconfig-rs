@@ -1,10 +1,26 @@
-use thiserror::Error;
+use std::error::Error as StdError;
+use std::fmt;
 
-/// Represents an error, that may be returned by `fn init()` of trait `Envconfig`.
-#[derive(Debug, PartialEq, Error)]
+/// Represents an error, that may be returned by `fn init_from_env()` of trait `Envconfig`.
+#[derive(Debug, PartialEq)]
 pub enum Error {
-    #[error("Env variable is missing: {name:?}")]
     EnvVarMissing { name: &'static str },
-    #[error("Failed to parse env variable: {name:?}")]
     ParseError { name: &'static str },
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::EnvVarMissing { name } => write!(f, "Environment variable {} is missing", name),
+            Error::ParseError { name } => {
+                write!(f, "Failed to parse environment variable {}", name)
+            }
+        }
+    }
+}
+
+impl StdError for Error {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        return None;
+    }
 }
