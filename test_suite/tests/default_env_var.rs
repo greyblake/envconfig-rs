@@ -34,4 +34,3 @@ fn test_var_is_missing() {
     let expected_err = Error::EnvVarMissing { name: "DB_HOST" };
     assert_eq!(err, expected_err);
 }
-
