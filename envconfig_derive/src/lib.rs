@@ -74,7 +74,7 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
         let from_opt = find_item_in_list(field, &list, "from");
         let env_var = match from_opt {
             Some(v) => quote! { #v },
-            None => field_to_env_var(field)
+            None => field_to_env_var(field),
         };
 
         geen(field, env_var, opt_default)
@@ -90,7 +90,11 @@ fn field_to_env_var(field: &Field) -> proc_macro2::TokenStream {
     quote! { #field_name }
 }
 
-fn geen(field: &Field, from: proc_macro2::TokenStream, opt_default: Option<&Lit>) -> proc_macro2::TokenStream {
+fn geen(
+    field: &Field,
+    from: proc_macro2::TokenStream,
+    opt_default: Option<&Lit>,
+) -> proc_macro2::TokenStream {
     let field_type = &field.ty;
     if to_s(field_type).starts_with("Option ") {
         gen_field_assign_for_optional_type(field, from, opt_default)

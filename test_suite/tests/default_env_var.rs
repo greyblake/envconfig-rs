@@ -6,7 +6,7 @@ use std::env;
 #[derive(Envconfig)]
 pub struct Config {
     pub db_host: String,
-    pub db_port: Option<u16>
+    pub db_port: Option<u16>,
 }
 
 fn setup() {
