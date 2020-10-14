@@ -1,3 +1,7 @@
+#### Unreleased
+* [breaking] Nested config fields now needs to be marked with #[envconfig(nested = true)]
+* Environment variable can be automatically derived from a field name (e.g. `db_host` will be tried to loaded from `DB_HOST` env var)
+
 #### v0.9.1 - 2019-10-09
 * Get rid of thiserror dependency
 
