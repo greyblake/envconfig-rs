@@ -65,7 +65,7 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
 
         // If nested attribute is present
         let nested_value_opt = find_item_in_list(field, &list, "nested");
-        if let Some(_) = nested_value_opt {
+        if nested_value_opt.is_some() {
             return gen_field_assign_for_struct_type(field);
         }
 
