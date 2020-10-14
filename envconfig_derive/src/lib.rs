@@ -60,19 +60,46 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
     let attr = fetch_envconfig_attr_from_field(field);
 
     if let Some(attr) = attr {
+        // if #[envconfig(...)] is there
         let list = fetch_list_from_attr(field, attr);
-        let from_value = find_item_in_list_or_panic(field, &list, "from");
+
+        // If nested attribute is present
+        let nested_value_opt = find_item_in_list(field, &list, "nested");
+        if nested_value_opt.is_some() {
+            return gen_field_assign_for_struct_type(field);
+        }
+
         let opt_default = find_item_in_list(field, &list, "default");
 
-        let field_type = &field.ty;
+        let from_opt = find_item_in_list(field, &list, "from");
+        let env_var = match from_opt {
+            Some(v) => quote! { #v },
+            None => field_to_env_var(field),
+        };
 
-        if to_s(field_type).starts_with("Option ") {
-            gen_field_assign_for_optional_type(field, from_value, opt_default)
-        } else {
-            gen_field_assign_for_non_optional_type(field, from_value, opt_default)
-        }
+        geen(field, env_var, opt_default)
     } else {
-        gen_field_assign_for_struct_type(field)
+        // if #[envconfig(...)] is not present
+        let env_var = field_to_env_var(field);
+        geen(field, env_var, None)
+    }
+}
+
+fn field_to_env_var(field: &Field) -> proc_macro2::TokenStream {
+    let field_name = field.clone().ident.unwrap().to_string().to_uppercase();
+    quote! { #field_name }
+}
+
+fn geen(
+    field: &Field,
+    from: proc_macro2::TokenStream,
+    opt_default: Option<&Lit>,
+) -> proc_macro2::TokenStream {
+    let field_type = &field.ty;
+    if to_s(field_type).starts_with("Option ") {
+        gen_field_assign_for_optional_type(field, from, opt_default)
+    } else {
+        gen_field_assign_for_non_optional_type(field, from, opt_default)
     }
 }
 
@@ -90,7 +117,7 @@ fn gen_field_assign_for_struct_type(field: &Field) -> proc_macro2::TokenStream {
 
 fn gen_field_assign_for_optional_type(
     field: &Field,
-    from: &Lit,
+    from: proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
 ) -> proc_macro2::TokenStream {
     let ident = &field.ident;
@@ -106,7 +133,7 @@ fn gen_field_assign_for_optional_type(
 
 fn gen_field_assign_for_non_optional_type(
     field: &Field,
-    from: &Lit,
+    from: proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
 ) -> proc_macro2::TokenStream {
     let ident = &field.ident;
@@ -146,20 +173,6 @@ fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMet
             field_name(field)
         ),
     }
-}
-
-fn find_item_in_list_or_panic<'l, 'n>(
-    field: &Field,
-    list: &'l Punctuated<NestedMeta, Comma>,
-    item_name: &'n str,
-) -> &'l Lit {
-    find_item_in_list(field, list, item_name).unwrap_or_else(|| {
-        panic!(
-            "`envconfig` attribute on field `{}` must contain `{}` item",
-            field_name(field),
-            item_name
-        )
-    })
 }
 
 fn find_item_in_list<'l, 'n>(

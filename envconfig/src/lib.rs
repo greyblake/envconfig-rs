@@ -20,18 +20,16 @@
 //!     pub http_port: u16,
 //! }
 //!
-//! fn main() {
-//!     // We assume that those environment variables are set somewhere outside
-//!     env::set_var("DB_HOST", "localhost");
-//!     env::set_var("DB_PORT", "5432");
+//! // We assume that those environment variables are set somewhere outside
+//! env::set_var("DB_HOST", "localhost");
+//! env::set_var("DB_PORT", "5432");
 //!
-//!     // Initialize config from environment variables
-//!     let config = Config::init().unwrap();
+//! // Initialize config from environment variables
+//! let config = Config::init().unwrap();
 //!
-//!     assert_eq!(config.db_host, "localhost");
-//!     assert_eq!(config.db_port, Some(5432));
-//!     assert_eq!(config.http_port, 8080);
-//! }
+//! assert_eq!(config.db_host, "localhost");
+//! assert_eq!(config.db_port, Some(5432));
+//! assert_eq!(config.http_port, 8080);
 //! ```
 //!
 //! The library uses `std::str::FromStr` trait to convert environment variables into custom

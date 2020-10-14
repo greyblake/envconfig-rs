@@ -21,6 +21,6 @@ impl fmt::Display for Error {
 
 impl StdError for Error {
     fn source(&self) -> Option<&(dyn StdError + 'static)> {
-        return None;
+        None
     }
 }
