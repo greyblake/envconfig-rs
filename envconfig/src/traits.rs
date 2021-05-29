@@ -19,7 +19,7 @@ pub trait Envconfig {
         Self: Sized;
 
     /// Initialize structure from a hashmap.
-    fn init_from_hashmap(hashmap: HashMap<String, String>) -> Result<Self, Error>
+    fn init_from_hashmap(hashmap: &HashMap<String, String>) -> Result<Self, Error>
     where
         Self: Sized;
 }

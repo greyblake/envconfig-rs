@@ -59,7 +59,7 @@ fn impl_envconfig_for_struct(
                 Ok(config)
             }
 
-            fn init_from_hashmap(hashmap: std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
+            fn init_from_hashmap(hashmap: &std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
                 let config = Self {
                     #(#field_assigns_hashmap,)*
                 };
@@ -83,7 +83,7 @@ fn gen_field_assign(field: &Field, source: Source) -> proc_macro2::TokenStream {
         // If nested attribute is present
         let nested_value_opt = find_item_in_list(field, &list, "nested");
         if nested_value_opt.is_some() {
-            return gen_field_assign_for_struct_type(field);
+            return gen_field_assign_for_struct_type(field, source);
         }
 
         let opt_default = find_item_in_list(field, &list, "default");
@@ -121,14 +121,17 @@ fn geen(
     }
 }
 
-fn gen_field_assign_for_struct_type(field: &Field) -> proc_macro2::TokenStream {
+fn gen_field_assign_for_struct_type(field: &Field, source: Source) -> proc_macro2::TokenStream {
     let ident = &field.ident;
     match &field.ty {
-        syn::Type::Path(path) => {
-            quote! {
-                #ident: #path :: init()?
-            }
-        }
+        syn::Type::Path(path) => match source {
+            Source::Environment => quote! {
+                #ident: #path :: init_from_env()?
+            },
+            Source::HashMap => quote! {
+                #ident: #path :: init_from_hashmap(hashmap)?
+            },
+        },
         _ => panic!("Expected field type to be a path: {:?}", ident),
     }
 }
@@ -150,7 +153,7 @@ fn gen_field_assign_for_optional_type(
                 #ident: ::envconfig::load_optional_var(#from, None)?
         },
         Source::HashMap => quote! {
-            #ident: ::envconfig::load_optional_var(#from, Some(&hashmap))?
+            #ident: ::envconfig::load_optional_var(#from, Some(hashmap))?
         },
     }
 }
@@ -169,7 +172,7 @@ fn gen_field_assign_for_non_optional_type(
                 #ident: ::envconfig::load_var_with_default(#from, None, #default)?
             },
             Source::HashMap => quote! {
-                #ident: ::envconfig::load_var_with_default(#from, Some(&hashmap), #default)?
+                #ident: ::envconfig::load_var_with_default(#from, Some(hashmap), #default)?
             },
         }
     } else {
@@ -178,7 +181,7 @@ fn gen_field_assign_for_non_optional_type(
                 #ident: ::envconfig::load_var(#from, None)?
             },
             Source::HashMap => quote! {
-                #ident: ::envconfig::load_var(#from, Some(&hashmap))?
+                #ident: ::envconfig::load_var(#from, Some(hashmap))?
             },
         }
     }
