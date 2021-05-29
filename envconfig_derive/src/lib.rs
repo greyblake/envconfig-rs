@@ -19,6 +19,11 @@ pub fn derive(input: TokenStream) -> TokenStream {
     gen.into()
 }
 
+enum Source {
+    Environment,
+    HashMap,
+}
+
 fn impl_envconfig(input: &DeriveInput) -> proc_macro2::TokenStream {
     use syn::Data::*;
     let struct_name = &input.ident;
@@ -38,13 +43,25 @@ fn impl_envconfig_for_struct(
     struct_name: &Ident,
     fields: &Punctuated<Field, Comma>,
 ) -> proc_macro2::TokenStream {
-    let field_assigns = fields.iter().map(gen_field_assign);
+    let field_assigns_env = fields
+        .iter()
+        .map(|field| gen_field_assign(field, Source::Environment));
+    let field_assigns_hashmap = fields
+        .iter()
+        .map(|field| gen_field_assign(field, Source::HashMap));
 
     quote! {
         impl Envconfig for #struct_name {
             fn init_from_env() -> ::std::result::Result<Self, ::envconfig::Error> {
                 let config = Self {
-                    #(#field_assigns,)*
+                    #(#field_assigns_env,)*
+                };
+                Ok(config)
+            }
+
+            fn init_from_hashmap(hashmap: std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
+                let config = Self {
+                    #(#field_assigns_hashmap,)*
                 };
                 Ok(config)
             }
@@ -56,7 +73,7 @@ fn impl_envconfig_for_struct(
     }
 }
 
-fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
+fn gen_field_assign(field: &Field, source: Source) -> proc_macro2::TokenStream {
     let attr = fetch_envconfig_attr_from_field(field);
 
     if let Some(attr) = attr {
@@ -77,11 +94,11 @@ fn gen_field_assign(field: &Field) -> proc_macro2::TokenStream {
             None => field_to_env_var(field),
         };
 
-        geen(field, env_var, opt_default)
+        geen(field, env_var, opt_default, source)
     } else {
         // if #[envconfig(...)] is not present
         let env_var = field_to_env_var(field);
-        geen(field, env_var, None)
+        geen(field, env_var, None, source)
     }
 }
 
@@ -94,12 +111,13 @@ fn geen(
     field: &Field,
     from: proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
+    source: Source,
 ) -> proc_macro2::TokenStream {
     let field_type = &field.ty;
     if to_s(field_type).starts_with("Option ") {
-        gen_field_assign_for_optional_type(field, from, opt_default)
+        gen_field_assign_for_optional_type(field, from, opt_default, source)
     } else {
-        gen_field_assign_for_non_optional_type(field, from, opt_default)
+        gen_field_assign_for_non_optional_type(field, from, opt_default, source)
     }
 }
 
@@ -111,7 +129,7 @@ fn gen_field_assign_for_struct_type(field: &Field) -> proc_macro2::TokenStream {
                 #ident: #path :: init()?
             }
         }
-        _ => panic!(format!("Expected field type to be a path: {:?}", ident)),
+        _ => panic!("Expected field type to be a path: {:?}", ident),
     }
 }
 
@@ -119,15 +137,21 @@ fn gen_field_assign_for_optional_type(
     field: &Field,
     from: proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
+    source: Source,
 ) -> proc_macro2::TokenStream {
     let ident = &field.ident;
 
     if opt_default.is_some() {
         panic!("Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(ident));
-    } else {
-        quote! {
-            #ident: ::envconfig::load_optional_var(#from)?
-        }
+    }
+
+    match source {
+        Source::Environment => quote! {
+                #ident: ::envconfig::load_optional_var(#from, None)?
+        },
+        Source::HashMap => quote! {
+            #ident: ::envconfig::load_optional_var(#from, Some(&hashmap))?
+        },
     }
 }
 
@@ -135,16 +159,27 @@ fn gen_field_assign_for_non_optional_type(
     field: &Field,
     from: proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
+    source: Source,
 ) -> proc_macro2::TokenStream {
     let ident = &field.ident;
 
     if let Some(default) = opt_default {
-        quote! {
-            #ident: ::envconfig::load_var_with_default(#from, #default)?
+        match source {
+            Source::Environment => quote! {
+                #ident: ::envconfig::load_var_with_default(#from, None, #default)?
+            },
+            Source::HashMap => quote! {
+                #ident: ::envconfig::load_var_with_default(#from, Some(&hashmap), #default)?
+            },
         }
     } else {
-        quote! {
-            #ident: ::envconfig::load_var(#from)?
+        match source {
+            Source::Environment => quote! {
+                #ident: ::envconfig::load_var(#from, None)?
+            },
+            Source::HashMap => quote! {
+                #ident: ::envconfig::load_var(#from, Some(&hashmap))?
+            },
         }
     }
 }

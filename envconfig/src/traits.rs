@@ -1,4 +1,5 @@
 use crate::error::Error;
+use std::collections::HashMap;
 
 /// Indicates that structure can be initialize from environment variables.
 pub trait Envconfig {
@@ -14,6 +15,11 @@ pub trait Envconfig {
 
     /// Initialize structure from environment variables.
     fn init_from_env() -> Result<Self, Error>
+    where
+        Self: Sized;
+
+    /// Initialize structure from a hashmap.
+    fn init_from_hashmap(hashmap: HashMap<String, String>) -> Result<Self, Error>
     where
         Self: Sized;
 }
