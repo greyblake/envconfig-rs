@@ -15,4 +15,4 @@ edition = "2018"
 [dev-dependencies]
 
 [dependencies]
-envconfig_derive = { version = "0.9.1", path = "../envconfig_derive" }
+envconfig_derive = { version = "0.10.0", path = "../envconfig_derive" }
