@@ -8,6 +8,13 @@
 
 <p align="center">Initialize config structure from environment variables in Rust without boilerplate.</p>
 
+## Install
+
+```rust
+[dependencies]
+envconfig = "0.10.0"
+```
+
 ## Usage
 
 Let's say you application relies on the following environment variables:
