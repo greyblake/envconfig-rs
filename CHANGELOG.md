@@ -1,6 +1,7 @@
 #### Unreleased
 * [breaking] Nested config fields now needs to be marked with #[envconfig(nested = true)]
 * Environment variable can be automatically derived from a field name (e.g. `db_host` will be tried to loaded from `DB_HOST` env var)
+* Add install step in README
 
 #### v0.10.0 - 2021-06-8
 * Add `init_from_hashmap` to initialize config from `HashMap<String, String>` in unit tests

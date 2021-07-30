@@ -1,4 +1,5 @@
 target/
+.idea/
 **/*.rs.bk
 *.sw[po]
 Cargo.lock
