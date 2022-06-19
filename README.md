@@ -17,6 +17,8 @@ envconfig = "0.10.0"
 
 ## Usage
 
+### Basic example
+
 Let's say you application relies on the following environment variables:
 
 * `DB_HOST`
@@ -26,8 +28,8 @@ And you want to initialize `Config` structure like this one:
 
 ```rust,ignore
 struct Config {
-    host: String,
-    port: u16,
+    db_host: String,
+    db_port: u16,
 }
 ```
 
@@ -57,13 +59,83 @@ fn main() {
 }
 ```
 
+### Nested configs
+
+Configs can be nested. Just add `#[envconfig(nested = true)]` to nested field.
+
+```rust
+#[derive(Envconfig)]
+pub struct DbConfig {
+    #[envconfig(from = "DB_HOST")]
+    pub host: String,
+
+    #[envconfig(from = "DB_PORT", default = "5432")]
+    pub port: u16,
+}
+
+#[derive(Envconfig)]
+pub struct Config {
+    #[envconfig(nested = true)]     // <---
+    db: DbConfig,
+
+    #[envconfig(from = "HOSTNAME")]
+    hostname: String,
+}
+```
+
+
+### Custom types
+
+Under the hood envconfig relies on [`FromStr`](https://doc.rust-lang.org/std/str/trait.FromStr.html) trait.
+If you want to use a custom type as a field for config, you have to implement `FromStr` trait for your custom type.
+
+Let's say we want to extend `DbConfig` with `driver` field, which is `DbDriver` enum that represents either `Postgresql` or `Mysql`:
+
+```rust
+pub enum DbDriver {
+    Postgresql,
+    Mysql,
+}
+
+impl std::str::FromStr for DbDriver {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_lowercase().as_ref() {
+            "postgres" => Ok(DbDriver::Postgresql),
+            "mysql" => Ok(DbDriver::Mysql),
+            _ => Err(format!("Unknown DB driver: {s}"))
+        }
+    }
+}
+
+#[derive(Envconfig)]
+pub struct DbConfig {
+    // ...
+    #[envconfig(from = "DB_DRIVER")]
+    pub driver: DbDriver,
+}
+```
+
+If this seems too cumbersome, consider using other crates like [strum](https://docs.rs/strum/latest/strum/) to derive `FromStr` automatically.
+
+```rust
+use strum::EnumString;
+
+#[derive(EnumString)]
+pub enum DbDriver {
+    Postgresql,
+    Mysql,
+}
+```
+
 ## Testing
 
 When writing tests you should avoid using environment variables. Cargo runs Rust tests in parallel by default which means
-you can end up with race conditions in your tests if two or more are fighting over an environment variable. 
+you can end up with race conditions in your tests if two or more are fighting over an environment variable.
 
-To solve this you can initialise your `struct` from a `HashMap<String, String>` in your tests. The `HashMap` should 
-match what you expect the real environment variables to be; for example `DB_HOST` environment variable becomes a 
+To solve this you can initialise your `struct` from a `HashMap<String, String>` in your tests. The `HashMap` should
+match what you expect the real environment variables to be; for example `DB_HOST` environment variable becomes a
 `DB_HOST` key in your `HashMap`.
 
 ```rust
@@ -80,7 +152,7 @@ pub struct Config {
 
 #[test]
 fn test_config_can_be_loaded_from_hashmap() {
-    // Create a HashMap that looks like your environment 
+    // Create a HashMap that looks like your environment
     let mut hashmap = HashMap::new();
     hashmap.insert("DB_HOST".to_string(), "127.0.0.1".to_string());
 
