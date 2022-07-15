@@ -1,13 +1,8 @@
 //! Provides a derive macro that implements `Envconfig` trait.
 //! For complete documentation please see [envconfig](https://docs.rs/envconfig).
 
-extern crate proc_macro;
-extern crate proc_macro2;
-extern crate syn;
-#[macro_use]
-extern crate quote;
-
 use proc_macro::TokenStream;
+use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{Attribute, DeriveInput, Field, Fields, Ident, Lit, Meta, NestedMeta};
@@ -59,7 +54,7 @@ fn impl_envconfig_for_struct(
                 Ok(config)
             }
 
-            fn init_from_hashmap(hashmap: &std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
+            fn init_from_hashmap(hashmap: &::std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
                 let config = Self {
                     #(#field_assigns_hashmap,)*
                 };
@@ -94,11 +89,11 @@ fn gen_field_assign(field: &Field, source: Source) -> proc_macro2::TokenStream {
             None => field_to_env_var(field),
         };
 
-        geen(field, env_var, opt_default, source)
+        gen(field, env_var, opt_default, source)
     } else {
         // if #[envconfig(...)] is not present
         let env_var = field_to_env_var(field);
-        geen(field, env_var, None, source)
+        gen(field, env_var, None, source)
     }
 }
 
@@ -107,7 +102,7 @@ fn field_to_env_var(field: &Field) -> proc_macro2::TokenStream {
     quote! { #field_name }
 }
 
-fn geen(
+fn gen(
     field: &Field,
     from: proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
@@ -142,18 +137,18 @@ fn gen_field_assign_for_optional_type(
     opt_default: Option<&Lit>,
     source: Source,
 ) -> proc_macro2::TokenStream {
-    let ident = &field.ident;
+    let field_name = &field.ident;
 
     if opt_default.is_some() {
-        panic!("Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(ident));
+        panic!("Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(field_name));
     }
 
     match source {
         Source::Environment => quote! {
-                #ident: ::envconfig::load_optional_var(#from, None)?
+            #field_name: ::envconfig::load_optional_var(#from, None)?
         },
         Source::HashMap => quote! {
-            #ident: ::envconfig::load_optional_var(#from, Some(hashmap))?
+            #field_name: ::envconfig::load_optional_var(#from, Some(hashmap))?
         },
     }
 }
@@ -164,24 +159,24 @@ fn gen_field_assign_for_non_optional_type(
     opt_default: Option<&Lit>,
     source: Source,
 ) -> proc_macro2::TokenStream {
-    let ident = &field.ident;
+    let field_name = &field.ident;
 
     if let Some(default) = opt_default {
         match source {
             Source::Environment => quote! {
-                #ident: ::envconfig::load_var_with_default(#from, None, #default)?
+                #field_name: ::envconfig::load_var_with_default(#from, None, #default)?
             },
             Source::HashMap => quote! {
-                #ident: ::envconfig::load_var_with_default(#from, Some(hashmap), #default)?
+                #field_name: ::envconfig::load_var_with_default(#from, Some(hashmap), #default)?
             },
         }
     } else {
         match source {
             Source::Environment => quote! {
-                #ident: ::envconfig::load_var(#from, None)?
+                #field_name: ::envconfig::load_var(#from, None)?
             },
             Source::HashMap => quote! {
-                #ident: ::envconfig::load_var(#from, Some(hashmap))?
+                #field_name: ::envconfig::load_var(#from, Some(hashmap))?
             },
         }
     }
@@ -213,8 +208,8 @@ fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMet
     }
 }
 
-fn find_item_in_list<'l, 'n>(
-    field: &Field,
+fn find_item_in_list<'f, 'l, 'n>(
+    field: &'f Field,
     list: &'l Punctuated<NestedMeta, Comma>,
     item_name: &'n str,
 ) -> Option<&'l Lit> {
