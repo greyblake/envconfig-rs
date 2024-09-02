@@ -97,8 +97,12 @@ fn gen_field_assign(field: &Field, source: &Source) -> proc_macro2::TokenStream 
 
         // If nested attribute is present
         let nested_value_opt = find_item_in_list(&list, "nested");
-        if nested_value_opt.is_present() {
-            return gen_field_assign_for_struct_type(field, source);
+        match nested_value_opt {
+            MatchingItem::NoValue => return gen_field_assign_for_struct_type(field, source),
+            MatchingItem::WithValue(_) => {
+                panic!("`nested` attribute must not have a value")
+            }
+            MatchingItem::None => {}
         }
 
         // Default value for the field
@@ -260,15 +264,6 @@ enum MatchingItem<'a> {
     WithValue(&'a Lit),
     NoValue,
     None,
-}
-
-impl<'a> MatchingItem<'a> {
-    fn is_present(&self) -> bool {
-        match self {
-            MatchingItem::WithValue(_) | MatchingItem::NoValue => true,
-            MatchingItem::None => false,
-        }
-    }
 }
 
 /// Tries to find the first matching item in the provided list

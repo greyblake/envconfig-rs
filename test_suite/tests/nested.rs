@@ -14,16 +14,16 @@ pub struct DBConfig {
 
 #[derive(Envconfig)]
 pub struct Config {
-    #[envconfig(nested = true)]
+    #[envconfig(nested)]
     pub db: DBConfig,
 }
 
 #[derive(Envconfig)]
 pub struct ConfigDouble {
-    #[envconfig(nested = true)]
+    #[envconfig(nested)]
     pub db1: DBConfig,
 
-    #[envconfig(nested = true)]
+    #[envconfig(nested)]
     pub db2: DBConfig,
 }
 
