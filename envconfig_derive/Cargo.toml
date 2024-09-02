@@ -17,6 +17,6 @@ workspace = true
 proc-macro = true
 
 [dependencies]
-syn = { version = "2.0.76", features = ["parsing", "derive"] }
+syn = { version = "2.0.77", features = ["parsing", "derive"] }
 quote = { version = "1.0.37", features = [] }
 proc-macro2 = { version = "1.0.86", features = [] }

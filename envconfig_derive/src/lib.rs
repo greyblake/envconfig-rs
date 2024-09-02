@@ -8,6 +8,11 @@ use syn::{
 };
 
 /// Custom derive for trait [`envconfig::Envconfig`]
+///
+/// # Panics
+/// - The provided [`TokenStream`] cannot be parsed
+/// - The provided input is not a named struct
+/// - Invalid configuration in the `envconfig` attributes
 #[proc_macro_derive(Envconfig, attributes(envconfig))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let derive_input: DeriveInput = syn::parse(input).unwrap();
@@ -42,7 +47,7 @@ fn impl_envconfig(input: &DeriveInput) -> proc_macro2::TokenStream {
         _ => panic!("envconfig only supports non-tuple structs"),
     };
 
-    let inner_impl = impl_envconfig_for_struct(struct_name, &named_fields);
+    let inner_impl = impl_envconfig_for_struct(struct_name, named_fields);
 
     quote!(#inner_impl)
 }
@@ -54,10 +59,10 @@ fn impl_envconfig_for_struct(
 ) -> proc_macro2::TokenStream {
     let field_assigns_env = fields
         .iter()
-        .map(|field| gen_field_assign(field, Source::Environment));
+        .map(|field| gen_field_assign(field, &Source::Environment));
     let field_assigns_hashmap = fields
         .iter()
-        .map(|field| gen_field_assign(field, Source::HashMap));
+        .map(|field| gen_field_assign(field, &Source::HashMap));
 
     quote! {
         impl Envconfig for #struct_name {
@@ -83,47 +88,58 @@ fn impl_envconfig_for_struct(
 }
 
 /// Generates the field assignments for the config struct
-fn gen_field_assign(field: &Field, source: Source) -> proc_macro2::TokenStream {
+fn gen_field_assign(field: &Field, source: &Source) -> proc_macro2::TokenStream {
     let attr = fetch_envconfig_attr_from_field(field);
 
     if let Some(attr) = attr {
         // if #[envconfig(...)] is there
-        let list = fetch_list_from_attr(field, attr);
+        let list = fetch_args_from_attr(field, attr);
 
         // If nested attribute is present
         let nested_value_opt = find_item_in_list(&list, "nested");
-        if nested_value_opt.is_some() {
+        if nested_value_opt.is_present() {
             return gen_field_assign_for_struct_type(field, source);
         }
 
-        let opt_default = find_item_in_list(&list, "default").unwrap_or(None);
-
-        let from_opt = find_item_in_list(&list, "from");
-        let env_var = match from_opt {
-            Some(v) => quote! { #v },
-            None => field_to_env_var_name(field),
+        // Default value for the field
+        let opt_default = match find_item_in_list(&list, "default") {
+            MatchingItem::WithValue(v) => Some(v),
+            MatchingItem::NoValue => panic!("`default` attribute must have a value"),
+            MatchingItem::None => None,
         };
 
-        gen(field, env_var, opt_default, source)
+        // Environment variable name
+        let from_opt = find_item_in_list(&list, "from");
+        let env_var = match from_opt {
+            MatchingItem::WithValue(v) => quote! { #v },
+            MatchingItem::NoValue => panic!("`from` attribute must have a value"),
+            MatchingItem::None => field_to_env_var_name(field),
+        };
+
+        gen(field, &env_var, opt_default, source)
     } else {
         // if #[envconfig(...)] is not present
         // use field name as name of the environment variable
         let env_var = field_to_env_var_name(field);
-        gen(field, env_var, None, source)
+        gen(field, &env_var, None, source)
     }
 }
 
 /// Turns the field name into an uppercase [`proc_macro2::TokenStream`]
+///
+/// # Panics
+/// Panics if the field does not have an identifier
 fn field_to_env_var_name(field: &Field) -> proc_macro2::TokenStream {
     let field_name = field.ident.clone().unwrap().to_string().to_uppercase();
     quote! { #field_name }
 }
 
+/// Generates the derived field assignment for the provided field
 fn gen(
     field: &Field,
-    from: proc_macro2::TokenStream,
+    from: &proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
-    source: Source,
+    source: &Source,
 ) -> proc_macro2::TokenStream {
     let field_type = &field.ty;
     if to_s(field_type).starts_with("Option ") {
@@ -133,7 +149,11 @@ fn gen(
     }
 }
 
-fn gen_field_assign_for_struct_type(field: &Field, source: Source) -> proc_macro2::TokenStream {
+/// Generates the derived field assignment for a (nested) struct type
+///
+/// # Panics
+/// Panics if the field type is not a path
+fn gen_field_assign_for_struct_type(field: &Field, source: &Source) -> proc_macro2::TokenStream {
     let ident: &Option<Ident> = &field.ident;
     match &field.ty {
         syn::Type::Path(path) => match source {
@@ -144,62 +164,65 @@ fn gen_field_assign_for_struct_type(field: &Field, source: Source) -> proc_macro
                 #ident: #path :: init_from_hashmap(hashmap)?
             },
         },
-        _ => panic!("Expected field type to be a path: {:?}", ident),
+        _ => panic!("Expected field type to be a path: {ident:?}",),
     }
 }
 
+/// Generates the derived field assignment for an optional type
+///
+/// # Panics
+/// Panics if the field is an optional type with a default value
 fn gen_field_assign_for_optional_type(
     field: &Field,
-    from: proc_macro2::TokenStream,
+    from: &proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
-    source: Source,
+    source: &Source,
 ) -> proc_macro2::TokenStream {
     let field_name = &field.ident;
 
-    if opt_default.is_some() {
-        panic!("Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(field_name));
-    }
+    assert!(opt_default.is_none(), "Optional type on field `{}` with default value does not make sense and therefore is not allowed", to_s(field_name));
 
     match source {
         Source::Environment => quote! {
-            #field_name: ::envconfig::load_optional_var(#from, None)?
+            #field_name: ::envconfig::load_optional_var::<_,::std::collections::hash_map::RandomState>(#from, None)?
         },
         Source::HashMap => quote! {
-            #field_name: ::envconfig::load_optional_var(#from, Some(hashmap))?
+            #field_name: ::envconfig::load_optional_var::<_,::std::collections::hash_map::RandomState>(#from, Some(hashmap))?
         },
     }
 }
 
+/// Generates the derived field assignment for non-optional types
 fn gen_field_assign_for_non_optional_type(
     field: &Field,
-    from: proc_macro2::TokenStream,
+    from: &proc_macro2::TokenStream,
     opt_default: Option<&Lit>,
-    source: Source,
+    source: &Source,
 ) -> proc_macro2::TokenStream {
     let field_name = &field.ident;
 
     if let Some(default) = opt_default {
         match source {
             Source::Environment => quote! {
-                #field_name: ::envconfig::load_var_with_default(#from, None, #default)?
+                #field_name: ::envconfig::load_var_with_default::<_,::std::collections::hash_map::RandomState>(#from, None, #default)?
             },
             Source::HashMap => quote! {
-                #field_name: ::envconfig::load_var_with_default(#from, Some(hashmap), #default)?
+                #field_name: ::envconfig::load_var_with_default::<_,::std::collections::hash_map::RandomState>(#from, Some(hashmap), #default)?
             },
         }
     } else {
         match source {
             Source::Environment => quote! {
-                #field_name: ::envconfig::load_var(#from, None)?
+                #field_name: ::envconfig::load_var::<_,::std::collections::hash_map::RandomState>(#from, None)?
             },
             Source::HashMap => quote! {
-                #field_name: ::envconfig::load_var(#from, Some(hashmap))?
+                #field_name: ::envconfig::load_var::<_,::std::collections::hash_map::RandomState>(#from, Some(hashmap))?
             },
         }
     }
 }
 
-/// Try to get the `envconfig` attribute from the provided field
+/// Tries to get the (first) `envconfig` attribute from the provided field
 fn fetch_envconfig_attr_from_field(field: &Field) -> Option<&Attribute> {
     field.attrs.iter().find(|a| {
         let path = &a.path();
@@ -208,8 +231,11 @@ fn fetch_envconfig_attr_from_field(field: &Field) -> Option<&Attribute> {
     })
 }
 
-/// Retrieves the [`syn::atr::MetaList`] for the provided attribute
-fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Vec<Meta> {
+/// Fetches the arguments from the provided attribute
+///
+/// # Panics
+/// Panics if the attribute cannot be parsed
+fn fetch_args_from_attr(field: &Field, attr: &Attribute) -> Vec<Meta> {
     let opt_meta = &attr.meta;
 
     match opt_meta {
@@ -223,31 +249,52 @@ fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Vec<Meta> {
                 )
             })
             .iter()
-            .map(|meta| meta.clone())
+            .cloned()
             .collect(),
         _ => vec![opt_meta.clone()],
     }
 }
 
-/// Tries to find a matching item in the provided list
+/// Represents the result of a search for an item in a [`Meta`] list
+enum MatchingItem<'a> {
+    WithValue(&'a Lit),
+    NoValue,
+    None,
+}
+
+impl<'a> MatchingItem<'a> {
+    fn is_present(&self) -> bool {
+        match self {
+            MatchingItem::WithValue(_) | MatchingItem::NoValue => true,
+            MatchingItem::None => false,
+        }
+    }
+}
+
+/// Tries to find the first matching item in the provided list
+///
+/// # Returns
+///
+/// - `Some(Some(Lit))` if a name-value pair is found
+/// - `Some(None)` if a path is found
+/// - `None` if no matching item is found
 ///
 /// # Panics
+///
 /// - Multiple items with the same name exist
 /// - The item is not a name-value pair or a path
-fn find_item_in_list<'l, 'n>(list: &'l Vec<Meta>, item_name: &'n str) -> Option<Option<&'l Lit>> {
+fn find_item_in_list<'l>(list: &'l [Meta], item_name: &str) -> MatchingItem<'l> {
     // Find all items with the provided name
     let matching_items = list
         .iter()
         .filter(|token_tree| token_tree.path().is_ident(item_name))
         .collect::<Vec<_>>();
 
-    // Error if multiple matching items are found
-    if matching_items.len() > 1 {
-        panic!(
-            "Found multiple `{}` attributes in `envconfig` attribute",
-            item_name
-        );
-    }
+    // Check that there is at most one item with the provided name. Error otherwise
+    assert!(
+        matching_items.len() <= 1,
+        "Found multiple `{item_name}` attributes in `envconfig` attribute",
+    );
 
     let matching_result = matching_items.first();
 
@@ -256,19 +303,21 @@ fn find_item_in_list<'l, 'n>(list: &'l Vec<Meta>, item_name: &'n str) -> Option<
             Meta::NameValue(MetaNameValue {
                 value: Expr::Lit(value),
                 ..
-            }) => Some(Some(&value.lit)),
-            Meta::Path(_) => Some(None),
-            _ => panic!("Expected `{}` to be a name-value pair or a path", item_name),
+            }) => MatchingItem::WithValue(&value.lit),
+            Meta::Path(_) => MatchingItem::NoValue,
+            _ => panic!("Expected `{item_name}` to be a name-value pair or a path"),
         };
     }
 
-    None
+    MatchingItem::None
 }
 
+/// Returns the name of the field as a string
 fn field_name(field: &Field) -> String {
     to_s(&field.ident)
 }
 
+/// Converts a [`quote::ToTokens`] to a string
 fn to_s<T: quote::ToTokens>(node: &T) -> String {
     quote!(#node).to_string()
 }

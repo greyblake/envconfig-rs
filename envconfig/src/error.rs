@@ -13,10 +13,10 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::EnvVarMissing { name } => {
-                write!(f, "Environment variable {} is missing", name)
+                write!(f, "Environment variable {name} is missing")
             }
             Error::ParseError { name } => {
-                write!(f, "Failed to parse environment variable {}", name)
+                write!(f, "Failed to parse environment variable {name}")
             }
         }
     }
