@@ -1,12 +1,13 @@
 //! Provides a derive macro that implements `Envconfig` trait.
-//! For complete documentation please see [envconfig](https://docs.rs/envconfig).
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::punctuated::Punctuated;
-use syn::token::Comma;
-use syn::{Attribute, DeriveInput, Field, Fields, Ident, Lit, Meta, NestedMeta};
+use syn::{
+    punctuated::Punctuated, token::Comma, Attribute, Data::Struct, DeriveInput, Expr, Field,
+    Fields, Ident, Lit, Meta, MetaNameValue, Token,
+};
 
+/// Custom derive for trait [`envconfig::Envconfig`]
 #[proc_macro_derive(Envconfig, attributes(envconfig))]
 pub fn derive(input: TokenStream) -> TokenStream {
     let derive_input: DeriveInput = syn::parse(input).unwrap();
@@ -14,26 +15,39 @@ pub fn derive(input: TokenStream) -> TokenStream {
     gen.into()
 }
 
+/// Source type for envconfig variables.
+///
+/// - `Environment`: Environment variables.
+/// - `HashMap`: [`std::collections::HashMap`] for mocking environments in tests.
 enum Source {
     Environment,
     HashMap,
 }
 
+/// Wrapper for [`impl_envconfig_for_struct`].
+///
+/// Checks if the provided input is a struct and generates the desired `impl EnvConfig`
+///
+/// # Panics
+/// Panics if `input.data` isn't a struct
 fn impl_envconfig(input: &DeriveInput) -> proc_macro2::TokenStream {
-    use syn::Data::*;
     let struct_name = &input.ident;
 
-    let inner_impl = match input.data {
+    // Check if derive input is a struct and contains named fields. Panic otherwise
+    let named_fields = match input.data {
         Struct(ref ds) => match ds.fields {
-            Fields::Named(ref fields) => impl_envconfig_for_struct(struct_name, &fields.named),
+            Fields::Named(ref fields) => &fields.named,
             _ => panic!("envconfig supports only named fields"),
         },
         _ => panic!("envconfig only supports non-tuple structs"),
     };
 
+    let inner_impl = impl_envconfig_for_struct(struct_name, &named_fields);
+
     quote!(#inner_impl)
 }
 
+/// Generates the `impl Envconfig` blocks for the provided struct
 fn impl_envconfig_for_struct(
     struct_name: &Ident,
     fields: &Punctuated<Field, Comma>,
@@ -68,6 +82,7 @@ fn impl_envconfig_for_struct(
     }
 }
 
+/// Generates the field assignments for the config struct
 fn gen_field_assign(field: &Field, source: Source) -> proc_macro2::TokenStream {
     let attr = fetch_envconfig_attr_from_field(field);
 
@@ -76,29 +91,31 @@ fn gen_field_assign(field: &Field, source: Source) -> proc_macro2::TokenStream {
         let list = fetch_list_from_attr(field, attr);
 
         // If nested attribute is present
-        let nested_value_opt = find_item_in_list(field, &list, "nested");
+        let nested_value_opt = find_item_in_list(&list, "nested");
         if nested_value_opt.is_some() {
             return gen_field_assign_for_struct_type(field, source);
         }
 
-        let opt_default = find_item_in_list(field, &list, "default");
+        let opt_default = find_item_in_list(&list, "default").unwrap_or(None);
 
-        let from_opt = find_item_in_list(field, &list, "from");
+        let from_opt = find_item_in_list(&list, "from");
         let env_var = match from_opt {
             Some(v) => quote! { #v },
-            None => field_to_env_var(field),
+            None => field_to_env_var_name(field),
         };
 
         gen(field, env_var, opt_default, source)
     } else {
         // if #[envconfig(...)] is not present
-        let env_var = field_to_env_var(field);
+        // use field name as name of the environment variable
+        let env_var = field_to_env_var_name(field);
         gen(field, env_var, None, source)
     }
 }
 
-fn field_to_env_var(field: &Field) -> proc_macro2::TokenStream {
-    let field_name = field.clone().ident.unwrap().to_string().to_uppercase();
+/// Turns the field name into an uppercase [`proc_macro2::TokenStream`]
+fn field_to_env_var_name(field: &Field) -> proc_macro2::TokenStream {
+    let field_name = field.ident.clone().unwrap().to_string().to_uppercase();
     quote! { #field_name }
 }
 
@@ -117,7 +134,7 @@ fn gen(
 }
 
 fn gen_field_assign_for_struct_type(field: &Field, source: Source) -> proc_macro2::TokenStream {
-    let ident = &field.ident;
+    let ident: &Option<Ident> = &field.ident;
     match &field.ty {
         syn::Type::Path(path) => match source {
             Source::Environment => quote! {
@@ -182,53 +199,70 @@ fn gen_field_assign_for_non_optional_type(
     }
 }
 
+/// Try to get the `envconfig` attribute from the provided field
 fn fetch_envconfig_attr_from_field(field: &Field) -> Option<&Attribute> {
     field.attrs.iter().find(|a| {
-        let path = &a.path;
+        let path = &a.path();
         let name = quote!(#path).to_string();
         name == "envconfig"
     })
 }
 
-fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Punctuated<NestedMeta, Comma> {
-    let opt_meta = attr.parse_meta().unwrap_or_else(|err| {
-        panic!(
-            "Can not interpret meta of `envconfig` attribute on field `{}`: {}",
-            field_name(field),
-            err
-        )
-    });
+/// Retrieves the [`syn::atr::MetaList`] for the provided attribute
+fn fetch_list_from_attr(field: &Field, attr: &Attribute) -> Vec<Meta> {
+    let opt_meta = &attr.meta;
 
     match opt_meta {
-        Meta::List(l) => l.nested,
-        _ => panic!(
-            "`envconfig` attribute on field `{}` must contain a list",
-            field_name(field)
-        ),
+        Meta::List(l) => l
+            .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+            .unwrap_or_else(|err| {
+                panic!(
+                    "{:?} in `envconfig` attribute on field `{}`",
+                    err,
+                    field_name(field)
+                )
+            })
+            .iter()
+            .map(|meta| meta.clone())
+            .collect(),
+        _ => vec![opt_meta.clone()],
     }
 }
 
-fn find_item_in_list<'f, 'l, 'n>(
-    field: &'f Field,
-    list: &'l Punctuated<NestedMeta, Comma>,
-    item_name: &'n str,
-) -> Option<&'l Lit> {
-    list.iter()
-        .map(|item| match item {
-            NestedMeta::Meta(meta) => match meta {
-                Meta::NameValue(name_value) => name_value,
-                _ => panic!(
-                    "`envconfig` attribute on field `{}` must contain name/value item",
-                    field_name(field)
-                ),
-            },
-            _ => panic!(
-                "Failed to process `envconfig` attribute on field `{}`",
-                field_name(field)
-            ),
-        })
-        .find(|name_value| name_value.path.is_ident(item_name))
-        .map(|item| &item.lit)
+/// Tries to find a matching item in the provided list
+///
+/// # Panics
+/// - Multiple items with the same name exist
+/// - The item is not a name-value pair or a path
+fn find_item_in_list<'l, 'n>(list: &'l Vec<Meta>, item_name: &'n str) -> Option<Option<&'l Lit>> {
+    // Find all items with the provided name
+    let matching_items = list
+        .iter()
+        .filter(|token_tree| token_tree.path().is_ident(item_name))
+        .collect::<Vec<_>>();
+
+    // Error if multiple matching items are found
+    if matching_items.len() > 1 {
+        panic!(
+            "Found multiple `{}` attributes in `envconfig` attribute",
+            item_name
+        );
+    }
+
+    let matching_result = matching_items.first();
+
+    if let Some(meta) = matching_result {
+        return match meta {
+            Meta::NameValue(MetaNameValue {
+                value: Expr::Lit(value),
+                ..
+            }) => Some(Some(&value.lit)),
+            Meta::Path(_) => Some(None),
+            _ => panic!("Expected `{}` to be a name-value pair or a path", item_name),
+        };
+    }
+
+    None
 }
 
 fn field_name(field: &Field) -> String {

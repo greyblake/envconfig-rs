@@ -4,7 +4,7 @@ use std::str::FromStr;
 use crate::error::Error;
 use std::collections::HashMap;
 
-/// Load a nenvironment variable by name and parse it into type `T`.
+/// Load an environment variable by name and parse it into type `T`.
 /// The function is used by `envconfig_derive` to implement `init()`.
 ///
 /// It returns `Error` in the following cases:

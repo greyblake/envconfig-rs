@@ -2,6 +2,10 @@
 name = "envconfig_test_suite"
 version = "0.2.0"
 authors = ["Sergey Potapov <blake131313@gmail.com>"]
+edition.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 envconfig = { path = "../envconfig" }
