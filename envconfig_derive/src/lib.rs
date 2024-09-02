@@ -98,26 +98,26 @@ fn gen_field_assign(field: &Field, source: &Source) -> proc_macro2::TokenStream 
         // If nested attribute is present
         let nested_value_opt = find_item_in_list(&list, "nested");
         match nested_value_opt {
-            MatchingItem::NoValue => return gen_field_assign_for_struct_type(field, source),
-            MatchingItem::WithValue(_) => {
+            Some(MatchingItem::NoValue) => return gen_field_assign_for_struct_type(field, source),
+            Some(MatchingItem::WithValue(_)) => {
                 panic!("`nested` attribute must not have a value")
             }
-            MatchingItem::None => {}
+            None => {}
         }
 
         // Default value for the field
         let opt_default = match find_item_in_list(&list, "default") {
-            MatchingItem::WithValue(v) => Some(v),
-            MatchingItem::NoValue => panic!("`default` attribute must have a value"),
-            MatchingItem::None => None,
+            Some(MatchingItem::WithValue(v)) => Some(v),
+            Some(MatchingItem::NoValue) => panic!("`default` attribute must have a value"),
+            None => None,
         };
 
         // Environment variable name
         let from_opt = find_item_in_list(&list, "from");
         let env_var = match from_opt {
-            MatchingItem::WithValue(v) => quote! { #v },
-            MatchingItem::NoValue => panic!("`from` attribute must have a value"),
-            MatchingItem::None => field_to_env_var_name(field),
+            Some(MatchingItem::WithValue(v)) => quote! { #v },
+            Some(MatchingItem::NoValue) => panic!("`from` attribute must have a value"),
+            None => field_to_env_var_name(field),
         };
 
         gen(field, &env_var, opt_default, source)
@@ -263,22 +263,21 @@ fn fetch_args_from_attr(field: &Field, attr: &Attribute) -> Vec<Meta> {
 enum MatchingItem<'a> {
     WithValue(&'a Lit),
     NoValue,
-    None,
 }
 
 /// Tries to find the first matching item in the provided list
 ///
 /// # Returns
 ///
-/// - `Some(Some(Lit))` if a name-value pair is found
-/// - `Some(None)` if a path is found
+/// - `MatchingItem::WithValue(&Lit)` if a name-value pair is found
+/// - `MatchingItem::NoValue` if a path is found
 /// - `None` if no matching item is found
 ///
 /// # Panics
 ///
 /// - Multiple items with the same name exist
 /// - The item is not a name-value pair or a path
-fn find_item_in_list<'l>(list: &'l [Meta], item_name: &str) -> MatchingItem<'l> {
+fn find_item_in_list<'l>(list: &'l [Meta], item_name: &str) -> Option<MatchingItem<'l>> {
     // Find all items with the provided name
     let matching_items = list
         .iter()
@@ -298,13 +297,13 @@ fn find_item_in_list<'l>(list: &'l [Meta], item_name: &str) -> MatchingItem<'l> 
             Meta::NameValue(MetaNameValue {
                 value: Expr::Lit(value),
                 ..
-            }) => MatchingItem::WithValue(&value.lit),
-            Meta::Path(_) => MatchingItem::NoValue,
+            }) => Some(MatchingItem::WithValue(&value.lit)),
+            Meta::Path(_) => Some(MatchingItem::NoValue),
             _ => panic!("Expected `{item_name}` to be a name-value pair or a path"),
         };
     }
 
-    MatchingItem::None
+    None
 }
 
 /// Returns the name of the field as a string
