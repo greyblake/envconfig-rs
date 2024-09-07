@@ -7,15 +7,16 @@ categories = ["config", "web-programming"]
 keywords = ["config", "env", "macro", "configuration", "environment"]
 license = "MIT"
 repository = "https://github.com/greyblake/envconfig-rs"
-homepage = "https://github.com/greyblake/envconfig-rs"
-documentation = "https://docs.rs/envconfig_derive"
 readme = "README.md"
-edition = "2018"
+edition.workspace = true
+
+[lints]
+workspace = true
 
 [lib]
 proc-macro = true
 
 [dependencies]
-syn = "1.0.17"
-quote = "1.0.3"
-proc-macro2 = "1.0.9"
+syn = { version = "2.0.77", features = ["parsing", "derive"] }
+quote = { version = "1.0.37", features = [] }
+proc-macro2 = { version = "1.0.86", features = [] }

@@ -4,19 +4,20 @@ use std::str::FromStr;
 use crate::error::Error;
 use std::collections::HashMap;
 
-/// Load a nenvironment variable by name and parse it into type `T`.
-/// The function is used by `envconfig_derive` to implement `init()`.
+/// Load an environment variable by name and parse it into type `T`.
 ///
-/// It returns `Error` in the following cases:
+/// This function can also use a hashmap as a fallback or for testing purposes.
+///
+/// # Errors
 /// - Environment variable is not present
 /// - Parsing failed
-pub fn load_var<T: FromStr>(
+pub fn load_var<T: FromStr, S: ::std::hash::BuildHasher>(
     var_name: &'static str,
-    hashmap: Option<&HashMap<String, String>>,
+    hashmap: Option<&HashMap<String, String, S>>,
 ) -> Result<T, Error> {
     match hashmap {
         None => env::var(var_name).ok(),
-        Some(hashmap) => hashmap.get(var_name).map(|val| val.to_string()),
+        Some(hashmap) => hashmap.get(var_name).map(std::string::ToString::to_string),
     }
     .ok_or(Error::EnvVarMissing { name: var_name })
     .and_then(|string_value| {
@@ -26,14 +27,21 @@ pub fn load_var<T: FromStr>(
     })
 }
 
-pub fn load_var_with_default<T: FromStr>(
+/// Tries to load an environment variable by name and parse it into type `T`.
+/// If the environment variable is not present, it returns a default value.
+///
+/// This function can also use a hashmap as a fallback or for testing purposes.
+///
+/// # Errors
+/// - Parsing failed
+pub fn load_var_with_default<T: FromStr, S: ::std::hash::BuildHasher>(
     var_name: &'static str,
-    hashmap: Option<&HashMap<String, String>>,
+    hashmap: Option<&HashMap<String, String, S>>,
     default: &'static str,
 ) -> Result<T, Error> {
     let opt_var = match hashmap {
         None => env::var(var_name).ok(),
-        Some(hashmap) => hashmap.get(var_name).map(|val| val.to_string()),
+        Some(hashmap) => hashmap.get(var_name).map(std::string::ToString::to_string),
     };
 
     let string_value = match opt_var {
@@ -46,13 +54,20 @@ pub fn load_var_with_default<T: FromStr>(
         .map_err(|_| Error::ParseError { name: var_name })
 }
 
-pub fn load_optional_var<T: FromStr>(
+/// Tries to load an environment variable by name and parse it into type `T`.
+/// If the environment variable is not present, it returns `None`.
+///
+/// This function can also use a hashmap as a fallback or for testing purposes.
+///
+/// # Errors
+/// - Parsing failed
+pub fn load_optional_var<T: FromStr, S: ::std::hash::BuildHasher>(
     var_name: &'static str,
-    hashmap: Option<&HashMap<String, String>>,
+    hashmap: Option<&HashMap<String, String, S>>,
 ) -> Result<Option<T>, Error> {
     let opt_var = match hashmap {
         None => env::var(var_name).ok(),
-        Some(hashmap) => hashmap.get(var_name).map(|val| val.to_string()),
+        Some(hashmap) => hashmap.get(var_name).map(std::string::ToString::to_string),
     };
 
     match opt_var {

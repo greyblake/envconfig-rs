@@ -16,5 +16,5 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 fn main() {
     let res: Result<i32> = Ok(123);
-    println!("{:?}", res);
+    println!("{res:?}");
 }

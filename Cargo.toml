@@ -1,6 +1,12 @@
 [workspace]
-members = [
-    "envconfig",
-    "envconfig_derive",
-    "test_suite"
-]
+resolver = "2"
+members = ["envconfig", "envconfig_derive", "test_suite"]
+
+[workspace.package]
+edition = "2021"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+pedantic = "warn"

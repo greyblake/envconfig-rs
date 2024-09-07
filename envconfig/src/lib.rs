@@ -25,7 +25,7 @@
 //! env::set_var("DB_PORT", "5432");
 //!
 //! // Initialize config from environment variables
-//! let config = Config::init().unwrap();
+//! let config = Config::init_from_env().unwrap();
 //!
 //! assert_eq!(config.db_host, "localhost");
 //! assert_eq!(config.db_port, Some(5432));
