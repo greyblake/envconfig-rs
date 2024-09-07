@@ -80,6 +80,7 @@ fn impl_envconfig_for_struct(
                 Ok(config)
             }
 
+            #[deprecated(since="0.10.0", note="Please use `::init_from_env` instead")]
             fn init() -> ::std::result::Result<Self, ::envconfig::Error> {
                 Self::init_from_env()
             }
