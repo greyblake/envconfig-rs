@@ -63,7 +63,7 @@ fn main() {
 
 ### Nested configs
 
-Configs can be nested. Just add `#[envconfig(nested = true)]` to nested field.
+Configs can be nested. Just add `#[envconfig(nested)]` to nested field.
 
 ```rust
 #[derive(Envconfig)]
@@ -77,7 +77,7 @@ pub struct DbConfig {
 
 #[derive(Envconfig)]
 pub struct Config {
-    #[envconfig(nested = true)]     // <---
+    #[envconfig(nested)]     // <---
     db: DbConfig,
 
     #[envconfig(from = "HOSTNAME")]

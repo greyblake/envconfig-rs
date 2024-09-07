@@ -1,7 +1,8 @@
-#### Unreleased
-* [breaking] Nested config fields now needs to be marked with #[envconfig(nested = true)]
+#### v0.11.0 - 2024-09-07
+* [breaking] Nested config fields now needs to be marked with #[envconfig(nested)]
 * Environment variable can be automatically derived from a field name (e.g. `db_host` will be tried to loaded from `DB_HOST` env var)
 * Add install step in README
+* Update `syn` dependency to 2.x.x
 
 #### v0.10.0 - 2021-06-8
 * Add `init_from_hashmap` to initialize config from `HashMap<String, String>` in unit tests
