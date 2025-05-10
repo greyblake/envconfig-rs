@@ -99,7 +99,19 @@ fn gen_field_assign(field: &Field, source: &Source) -> proc_macro2::TokenStream 
         // If nested attribute is present
         let nested_value_opt = find_item_in_list(&list, "nested");
         match nested_value_opt {
-            Some(MatchingItem::NoValue) => return gen_field_assign_for_struct_type(field, source),
+            Some(MatchingItem::NoValue) => {
+                // Check if there's a prefix attribute
+                let prefix_opt = find_item_in_list(&list, "prefix");
+                match prefix_opt {
+                    Some(MatchingItem::WithValue(prefix_lit)) => {
+                        return gen_field_assign_for_struct_type_with_prefix(field, source, prefix_lit)
+                    }
+                    Some(MatchingItem::NoValue) => {
+                        panic!("`prefix` attribute must have a value")
+                    }
+                    None => return gen_field_assign_for_struct_type(field, source),
+                }
+            }
             Some(MatchingItem::WithValue(_)) => {
                 panic!("`nested` attribute must not have a value")
             }
@@ -167,6 +179,51 @@ fn gen_field_assign_for_struct_type(field: &Field, source: &Source) -> proc_macr
             },
             Source::HashMap => quote! {
                 #ident: #path :: init_from_hashmap(hashmap)?
+            },
+        },
+        _ => panic!("Expected field type to be a path: {ident:?}",),
+    }
+}
+
+/// Generates the derived field assignment for a (nested) struct type with a prefix
+///
+/// # Panics
+/// Panics if the field type is not a path or if the prefix is not a string literal
+fn gen_field_assign_for_struct_type_with_prefix(field: &Field, source: &Source, prefix: &Lit) -> proc_macro2::TokenStream {
+    let ident: &Option<Ident> = &field.ident;
+    
+    // Get prefix value as a string
+    let prefix_str = match prefix {
+        Lit::Str(s) => s.value(),
+        _ => panic!("Expected prefix to be a string literal"),
+    };
+    
+    // Create a new hashmap with the prefixed values
+    match &field.ty {
+        syn::Type::Path(path) => match source {
+            Source::Environment => quote! {
+                #ident: {
+                    // Create a new hashmap with prefixed environment variables
+                    let mut prefixed_env = ::std::collections::HashMap::new();
+                    for (key, value) in ::std::env::vars() {
+                        if key.starts_with(#prefix_str) {
+                            prefixed_env.insert(key[#prefix_str.len()..].to_string(), value);
+                        }
+                    }
+                    #path :: init_from_hashmap(&prefixed_env)?
+                }
+            },
+            Source::HashMap => quote! {
+                #ident: {
+                    // Create a new hashmap with prefixed variables
+                    let mut prefixed_map = ::std::collections::HashMap::new();
+                    for (key, value) in hashmap.iter() {
+                        if key.starts_with(#prefix_str) {
+                            prefixed_map.insert(key[#prefix_str.len()..].to_string(), value.clone());
+                        }
+                    }
+                    #path :: init_from_hashmap(&prefixed_map)?
+                }
             },
         },
         _ => panic!("Expected field type to be a path: {ident:?}",),

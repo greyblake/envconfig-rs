@@ -85,6 +85,39 @@ pub struct Config {
 }
 ```
 
+### Nested configs with prefix
+
+You can also nest configs with a prefix, which will strip the prefix from environment variables before passing them to the nested config. This is useful for grouping related environment variables.
+
+```rust
+#[derive(Envconfig)]
+pub struct DbConfig {
+    #[envconfig(from = "HOST")]  // Will use DB_HOST from environment
+    pub host: String,
+
+    #[envconfig(from = "PORT", default = "5432")]  // Will use DB_PORT from environment
+    pub port: u16,
+}
+
+#[derive(Envconfig)]
+pub struct CacheConfig {
+    #[envconfig(from = "HOST")]  // Will use CACHE_HOST from environment
+    pub host: String,
+
+    #[envconfig(from = "PORT", default = "6379")]  // Will use CACHE_PORT from environment
+    pub port: u16,
+}
+
+#[derive(Envconfig)]
+pub struct Config {
+    #[envconfig(nested, prefix = "DB_")]     // <---
+    db: DbConfig,
+
+    #[envconfig(nested, prefix = "CACHE_")]  // <---
+    cache: CacheConfig,
+}
+```
+
 
 ### Custom types
 
