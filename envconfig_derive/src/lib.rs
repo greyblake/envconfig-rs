@@ -172,8 +172,9 @@ fn gen_field_assign_for_struct_type(field: &Field, source: &Source, prefix: Opti
     
     match &field.ty {
         syn::Type::Path(path) => {
-            // If there's no prefix, use the simple form
-            if prefix.is_none() {
+            // Use pattern matching to handle the prefix
+            let Some(prefix_lit) = prefix else {
+                // If there's no prefix, use the simple form
                 return match source {
                     Source::Environment => quote! {
                         #ident: #path :: init_from_env()?
@@ -182,10 +183,10 @@ fn gen_field_assign_for_struct_type(field: &Field, source: &Source, prefix: Opti
                         #ident: #path :: init_from_hashmap(hashmap)?
                     },
                 };
-            }
+            };
             
             // Otherwise, process with prefix
-            let prefix_str = match prefix.unwrap() {
+            let prefix_str = match prefix_lit {
                 Lit::Str(s) => s.value(),
                 _ => panic!("Expected prefix to be a string literal"),
             };
