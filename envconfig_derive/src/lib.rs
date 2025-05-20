@@ -197,8 +197,8 @@ fn gen_field_assign_for_struct_type(field: &Field, source: &Source, prefix: Opti
                         // Create a new hashmap with prefixed environment variables
                         let mut prefixed_env = ::std::collections::HashMap::new();
                         for (key, value) in ::std::env::vars() {
-                            if key.starts_with(#prefix_str) {
-                                prefixed_env.insert(key[#prefix_str.len()..].to_string(), value);
+                            if let Some(suffix) = key.strip_prefix(#prefix_str) {
+                                prefixed_env.insert(suffix.to_string(), value);
                             }
                         }
                         #path :: init_from_hashmap(&prefixed_env)?
