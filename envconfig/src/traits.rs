@@ -26,12 +26,33 @@ pub trait Envconfig {
     where
         Self: Sized;
 
+    /// Initialize structure from environment variables using an optional prefix for the environment variable names.
+    ///
+    /// # Errors
+    /// - Environment variable is missing.
+    /// - Failed to parse environment variable.
+    fn init_from_env_with_prefix(prefix: &str) -> Result<Self, Error>
+    where
+        Self: Sized;
+
     /// Initialize structure from a hashmap.
     ///
     /// # Errors
     /// - Environment variable is missing.
     /// - Failed to parse environment variable.
     fn init_from_hashmap(hashmap: &HashMap<String, String>) -> Result<Self, Error>
+    where
+        Self: Sized;
+
+    /// Initialize structure from a hashmap using an optional prefix for the environment variable names.
+    ///
+    /// # Errors
+    /// - Environment variable is missing.
+    /// - Failed to parse environment variable.
+    fn init_from_hashmap_with_prefix(
+        prefix: &str,
+        hashmap: &HashMap<String, String>,
+    ) -> Result<Self, Error>
     where
         Self: Sized;
 }

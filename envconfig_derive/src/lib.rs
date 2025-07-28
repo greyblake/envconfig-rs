@@ -63,19 +63,31 @@ fn impl_envconfig_for_struct(
     let field_assigns_hashmap = fields
         .iter()
         .map(|field| gen_field_assign(field, &Source::HashMap));
+    let field_names = fields.iter().map(|field| &field.ident);
+    let field_names_hashmap = fields.iter().map(|field| &field.ident);
 
     quote! {
         impl Envconfig for #struct_name {
             fn init_from_env() -> ::std::result::Result<Self, ::envconfig::Error> {
+                Self::init_from_env_with_prefix("")
+            }
+
+            fn init_from_env_with_prefix(prefix: &str) -> ::std::result::Result<Self, ::envconfig::Error> {
+                #(#field_assigns_env)*
                 let config = Self {
-                    #(#field_assigns_env,)*
+                    #(#field_names,)*
                 };
                 Ok(config)
             }
 
             fn init_from_hashmap(hashmap: &::std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
+                Self::init_from_hashmap_with_prefix("", hashmap)
+            }
+
+            fn init_from_hashmap_with_prefix(prefix: &str, hashmap: &::std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
+                #(#field_assigns_hashmap)*
                 let config = Self {
-                    #(#field_assigns_hashmap,)*
+                    #(#field_names_hashmap,)*
                 };
                 Ok(config)
             }
@@ -99,9 +111,21 @@ fn gen_field_assign(field: &Field, source: &Source) -> proc_macro2::TokenStream 
         // If nested attribute is present
         let nested_value_opt = find_item_in_list(&list, "nested");
         match nested_value_opt {
-            Some(MatchingItem::NoValue) => return gen_field_assign_for_struct_type(field, source),
+            Some(MatchingItem::NoValue) => {
+                return gen_field_assign_for_struct_type(field, quote! {""}, source)
+            }
             Some(MatchingItem::WithValue(_)) => {
                 panic!("`nested` attribute must not have a value")
+            }
+            None => {}
+        }
+
+        let prefix_value_opt = find_item_in_list(&list, "prefix");
+        match prefix_value_opt {
+            Some(MatchingItem::NoValue) => panic!("`prefix` attribute must have a value"),
+            Some(MatchingItem::WithValue(v)) => {
+                let v = quote! { #v };
+                return gen_field_assign_for_struct_type(field, v, source);
             }
             None => {}
         }
@@ -158,16 +182,24 @@ fn gen(
 ///
 /// # Panics
 /// Panics if the field type is not a path
-fn gen_field_assign_for_struct_type(field: &Field, source: &Source) -> proc_macro2::TokenStream {
+fn gen_field_assign_for_struct_type(
+    field: &Field,
+    prefix: proc_macro2::TokenStream,
+    source: &Source,
+) -> proc_macro2::TokenStream {
     let ident: &Option<Ident> = &field.ident;
     match &field.ty {
         syn::Type::Path(path) => match source {
-            Source::Environment => quote! {
-                #ident: #path :: init_from_env()?
-            },
-            Source::HashMap => quote! {
-                #ident: #path :: init_from_hashmap(hashmap)?
-            },
+            Source::Environment => {
+                quote! {
+                    let #ident = #path :: init_from_env_with_prefix(#prefix)?;
+                }
+            }
+            Source::HashMap => {
+                quote! {
+                    let #ident = #path :: init_from_hashmap_with_prefix(#prefix, hashmap)?;
+                }
+            }
         },
         _ => panic!("Expected field type to be a path: {ident:?}",),
     }
@@ -189,10 +221,22 @@ fn gen_field_assign_for_optional_type(
 
     match source {
         Source::Environment => quote! {
-            #field_name: ::envconfig::load_optional_var::<_,::std::collections::hash_map::RandomState>(#from, None)?
+            let #field_name = {
+                let field_name: &'static str = Box::leak(format!("{}{}", prefix, #from).into_boxed_str());
+                ::envconfig::load_optional_var::<_,::std::collections::hash_map::RandomState>(
+                    field_name,
+                    None
+                )
+            }?;
         },
         Source::HashMap => quote! {
-            #field_name: ::envconfig::load_optional_var::<_,::std::collections::hash_map::RandomState>(#from, Some(hashmap))?
+            let #field_name = {
+                let field_name: &'static str = Box::leak(format!("{}{}", prefix, #from).into_boxed_str());
+                ::envconfig::load_optional_var::<_,::std::collections::hash_map::RandomState>(
+                    field_name,
+                    Some(hashmap)
+                )
+            }?;
         },
     }
 }
@@ -209,19 +253,45 @@ fn gen_field_assign_for_non_optional_type(
     if let Some(default) = opt_default {
         match source {
             Source::Environment => quote! {
-                #field_name: ::envconfig::load_var_with_default::<_,::std::collections::hash_map::RandomState>(#from, None, #default)?
+                let #field_name = {
+                    let field_name: &'static str = Box::leak(format!("{}{}", prefix, #from).into_boxed_str());
+                    ::envconfig::load_var_with_default::<_,::std::collections::hash_map::RandomState>(
+                        field_name,
+                        None,
+                        #default
+                    )?
+                };
             },
             Source::HashMap => quote! {
-                #field_name: ::envconfig::load_var_with_default::<_,::std::collections::hash_map::RandomState>(#from, Some(hashmap), #default)?
+                let #field_name = {
+                    let field_name: &'static str = Box::leak(format!("{}{}", prefix, #from).into_boxed_str());
+                    ::envconfig::load_var_with_default::<_,::std::collections::hash_map::RandomState>(
+                        field_name,
+                        Some(hashmap),
+                        #default
+                    )?
+                };
             },
         }
     } else {
         match source {
             Source::Environment => quote! {
-                #field_name: ::envconfig::load_var::<_,::std::collections::hash_map::RandomState>(#from, None)?
+                let #field_name = {
+                    let field_name: &'static str = Box::leak(format!("{}{}", prefix, #from).into_boxed_str());
+                    ::envconfig::load_var::<_,::std::collections::hash_map::RandomState>(
+                        field_name,
+                        None
+                    )?
+                };
             },
             Source::HashMap => quote! {
-                #field_name: ::envconfig::load_var::<_,::std::collections::hash_map::RandomState>(#from, Some(hashmap))?
+                let #field_name = {
+                    let field_name: &'static str = Box::leak(format!("{}{}", prefix, #from).into_boxed_str());
+                    ::envconfig::load_var::<_,::std::collections::hash_map::RandomState>(
+                        field_name,
+                        Some(hashmap)
+                    )?
+                };
             },
         }
     }
