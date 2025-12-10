@@ -1,3 +1,6 @@
+#### v0.11.1 - 2025-12-10
+- [fix] Fully qualify `Ok` enum variant in the generated code.
+
 #### v0.11.0 - 2024-09-07
 * [breaking] Nested config fields now needs to be marked with #[envconfig(nested)]
 * Environment variable can be automatically derived from a field name (e.g. `db_host` will be tried to loaded from `DB_HOST` env var)
