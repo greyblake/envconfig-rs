@@ -70,14 +70,14 @@ fn impl_envconfig_for_struct(
                 let config = Self {
                     #(#field_assigns_env,)*
                 };
-                Ok(config)
+                ::core::result::Result::Ok(config)
             }
 
             fn init_from_hashmap(hashmap: &::std::collections::HashMap<String, String>) -> ::std::result::Result<Self, ::envconfig::Error> {
                 let config = Self {
                     #(#field_assigns_hashmap,)*
                 };
-                Ok(config)
+                ::core::result::Result::Ok(config)
             }
 
             #[deprecated(since="0.10.0", note="Please use `::init_from_env` instead")]
